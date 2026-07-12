@@ -1,37 +1,32 @@
-/**
- * Axios interceptors — registered once at app startup.
- *
- * Attach this to the shared axios instance by importing and calling
- * registerInterceptors(api) from main.jsx (before rendering).
- */
-import { authService } from '@/services/auth.service'
+import api from "./axios";
+import { authService } from "@/services/auth.service";
+import { ROUTES } from "@/constants/routes";
 
-/**
- * @param {import('axios').AxiosInstance} axiosInstance
- */
-export function registerInterceptors(axiosInstance) {
-  // ── Request: attach access token ──────────────────────────────────────────
-  axiosInstance.interceptors.request.use(
-    (config) => {
-      const token = authService.getToken()
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-      return config
-    },
-    (error) => Promise.reject(error),
-  )
+api.interceptors.request.use((config) => {
+  const token = authService.getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
-  // ── Response: handle 401 globally ─────────────────────────────────────────
-  axiosInstance.interceptors.response.use(
-    (response) => response,
-    (error) => {
-      if (error.response?.status === 401) {
-        authService.clearSession()
-        // Redirect to login — avoids importing React Router here
-        window.location.href = '/login'
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const customError = new Error(error.response?.data?.message || error.message);
+    
+    if (error.response?.data?.errors?.length) {
+      customError.message = error.response.data.errors.map(e => e.msg).join(', ');
+    }
+
+    if (error.response?.status === 401) {
+      authService.clearSession();
+      if (window.location.pathname !== ROUTES.LOGIN) {
+        window.location.href = ROUTES.LOGIN;
       }
-      return Promise.reject(error)
-    },
-  )
-}
+    }
+    return Promise.reject(customError);
+  },
+);
+
+export default api;

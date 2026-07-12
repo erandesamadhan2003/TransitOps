@@ -1,7 +1,6 @@
 import * as tripsModel from './trips.model.js';
 import * as vehiclesModel from '../vehicles/vehicles.model.js';
 import * as driversModel from '../drivers/drivers.model.js';
-import { db } from '../../config/db.js'; // Actually need withTransaction
 import pool, { withTransaction } from '../../config/db.js';
 import { ConflictError, NotFoundError, BadRequestError } from '../../utils/errors.js';
 

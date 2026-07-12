@@ -1,31 +1,45 @@
-/**
- * validators.js — Reusable Zod schema fragments
- * Import these in feature schemas.js files to avoid duplication.
- */
-import { z } from 'zod'
+import { z } from "zod";
 
-export const phoneSchema = z
+export const requiredString = (label = "This field") =>
+  z.string().min(1, `${label} is required`);
+
+export const email = z.string().email("Enter a valid email address");
+
+export const password = z
   .string()
-  .regex(/^\+?[1-9]\d{9,14}$/, 'Enter a valid phone number')
+  .min(8, "Password must be at least 8 characters");
 
-export const emailSchema = z
+export const phone = z
   .string()
-  .email('Enter a valid email address')
+  .min(10, "Enter a valid phone number")
+  .max(15, "Enter a valid phone number");
 
-export const passwordSchema = z
+export const positiveNumber = (label = "Value") =>
+  z.coerce
+    .number({ invalid_type_error: `${label} must be a number` })
+    .positive(`${label} must be greater than 0`);
+
+export const nonNegativeNumber = (label = "Value") =>
+  z.coerce
+    .number({ invalid_type_error: `${label} must be a number` })
+    .min(0, `${label} cannot be negative`);
+
+export const registrationNumber = z
   .string()
-  .min(8, 'Password must be at least 8 characters')
+  .min(4, "Enter a valid registration number")
+  .max(15, "Registration number is too long")
+  .regex(/^[A-Z0-9\-]+$/i, "Only letters, numbers and hyphens are allowed");
 
-export const requiredString = z
+export const futureDate = z
   .string()
-  .min(1, 'This field is required')
-
-export const positiveNumber = z
-  .number({ invalid_type_error: 'Must be a number' })
-  .positive('Must be a positive number')
-
-export const futureDateSchema = z
-  .string()
+  .min(1, "Date is required")
   .refine((val) => new Date(val) > new Date(), {
-    message: 'Date must be in the future',
-  })
+    message: "Date must be in the future",
+  });
+
+export const pastOrPresentDate = z
+  .string()
+  .min(1, "Date is required")
+  .refine((val) => new Date(val) <= new Date(), {
+    message: "Date cannot be in the future",
+  });

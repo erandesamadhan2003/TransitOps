@@ -1,37 +1,58 @@
-/**
- * permission.service.js
- *
- * RBAC helper. Extend this as backend roles/permissions are finalized.
- *
- * Usage:
- *   import { permissionService } from '@/services/permission.service'
- *   permissionService.hasRole('admin', user)
- */
+import { ROLES } from "@/constants/app";
+import { authService } from "./auth.service";
+
+const PERMISSION_MATRIX = {
+  [ROLES.FLEET_MANAGER]: {
+    fleet: "edit",
+    drivers: "edit",
+    trips: "none",
+    fuelExpenses: "none",
+    analytics: "edit",
+  },
+  [ROLES.DISPATCHER]: {
+    fleet: "view",
+    drivers: "none",
+    trips: "edit",
+    fuelExpenses: "none",
+    analytics: "none",
+  },
+  [ROLES.SAFETY_OFFICER]: {
+    fleet: "none",
+    drivers: "edit",
+    trips: "view",
+    fuelExpenses: "none",
+    analytics: "none",
+  },
+  [ROLES.FINANCIAL_ANALYST]: {
+    fleet: "view",
+    drivers: "none",
+    trips: "none",
+    fuelExpenses: "edit",
+    analytics: "edit",
+  },
+};
 
 export const permissionService = {
-  /**
-   * True if the user has at least one of the given roles.
-   * @param {string | string[]} roles
-   * @param {{ role: string } | null} user
-   * @returns {boolean}
-   */
-  hasRole(roles, user) {
-    if (!user?.role) return false
-    const list = Array.isArray(roles) ? roles : [roles]
-    return list.includes(user.role)
+  hasRole(...roles) {
+    const user = authService.getUser();
+    if (!user?.role) return false;
+    return roles.includes(user.role);
   },
 
-  /**
-   * Generic permission check.
-   * Extend this with a real permission map once backend roles are confirmed.
-   *
-   * @param {string} _resource - e.g. 'vehicles'
-   * @param {string} _action   - e.g. 'delete'
-   * @param {{ role: string } | null} user
-   * @returns {boolean}
-   */
-  can(_resource, _action, user) {
-    // Placeholder — wire up a real permission map once roles are confirmed
-    return Boolean(user?.role)
+  levelFor(module) {
+    const user = authService.getUser();
+    if (!user?.role) return "none";
+    return PERMISSION_MATRIX[user.role]?.[module] ?? "none";
   },
-}
+
+  can(module, action = "view") {
+    const level = this.levelFor(module);
+    if (level === "none") return false;
+    if (action === "view") return level === "view" || level === "edit";
+    return level === "edit";
+  },
+
+  matrix() {
+    return PERMISSION_MATRIX;
+  },
+};

@@ -1,18 +1,8 @@
-/**
- * Pagination.jsx — Simple page-based pagination control
- */
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { Button } from './Button'
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "./Button";
 
-/**
- * @param {{
- *   page: number,
- *   totalPages: number,
- *   onPageChange: (page: number) => void,
- * }} props
- */
 export function Pagination({ page, totalPages, onPageChange }) {
-  if (totalPages <= 1) return null
+  if (totalPages <= 1) return null;
 
   return (
     <div className="flex items-center justify-between px-2 py-3">
@@ -42,5 +32,5 @@ export function Pagination({ page, totalPages, onPageChange }) {
         </Button>
       </div>
     </div>
-  )
+  );
 }

@@ -1,0 +1,73 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { vehiclesApi } from "./api";
+import { useToast } from "@/hooks";
+import { STALE_TIME } from "@/constants/app";
+
+export function useVehicles(params = {}) {
+  return useQuery({
+    queryKey: ["vehicles", params],
+    queryFn: () => vehiclesApi.getAll(params),
+    staleTime: STALE_TIME.DEFAULT,
+  });
+}
+
+export function useDispatchableVehicles(enabled = true) {
+  return useQuery({
+    queryKey: ["vehicles", "dispatchable"],
+    queryFn: vehiclesApi.getDispatchable,
+    staleTime: STALE_TIME.SHORT,
+    enabled,
+  });
+}
+
+export function useVehicle(id) {
+  return useQuery({
+    queryKey: ["vehicles", id],
+    queryFn: () => vehiclesApi.getById(id),
+    enabled: Boolean(id),
+  });
+}
+
+export function useCreateVehicle() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: vehiclesApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      toast.success("Vehicle added to the fleet.");
+    },
+    onError: (err) => toast.error(err.message || "Could not add the vehicle."),
+  });
+}
+
+export function useUpdateVehicle() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: ({ id, payload }) => vehiclesApi.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      toast.success("Vehicle updated.");
+    },
+    onError: (err) =>
+      toast.error(err.message || "Could not update the vehicle."),
+  });
+}
+
+export function useDeleteVehicle() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: vehiclesApi.retire,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      toast.success("Vehicle retired.");
+    },
+    onError: (err) =>
+      toast.error(err.message || "Could not remove the vehicle."),
+  });
+}

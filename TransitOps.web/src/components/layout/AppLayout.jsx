@@ -1,51 +1,102 @@
-/**
- * AppLayout.jsx — Authenticated app shell
- *
- * Composes: Sidebar + Navbar + main content area.
- *
- * To set up navigation, define your nav array here once you know your pages:
- *
- *   const NAV = [
- *     { label: 'Dashboard', path: '/', icon: <LayoutDashboard size={18} /> },
- *     { label: 'Vehicles',  path: '/vehicles', icon: <Truck size={18} /> },
- *   ]
- *
- * Then pass it to <Sidebar nav={NAV} />.
- */
-import { useNavigate } from 'react-router-dom'
-import { Sidebar } from './Sidebar'
-import { Navbar } from './Navbar'
-import { authService } from '@/services/auth.service'
+import { useMemo } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
+import {
+  LayoutDashboard,
+  Truck,
+  Users,
+  Route as RouteIcon,
+  Wrench,
+  Fuel,
+  BarChart3,
+  Settings as SettingsIcon,
+} from "lucide-react";
+import { Sidebar } from "./Sidebar";
+import { Navbar } from "./Navbar";
+import { ROUTES } from "@/constants/routes";
+import { authService } from "@/services/auth.service";
+import { permissionService } from "@/services/permission.service";
 
-// Define nav items here as you build pages
-const NAV = []
+const ICON_SIZE = 18;
 
-/**
- * @param {{ children: React.ReactNode }} props
- */
-export function AppLayout({ children }) {
-  const navigate = useNavigate()
-  const user = authService.getUser()
+const NAV_DEFINITIONS = [
+  {
+    label: "Dashboard",
+    path: ROUTES.DASHBOARD,
+    icon: <LayoutDashboard size={ICON_SIZE} />,
+    module: null,
+  },
+  {
+    label: "Fleet",
+    path: ROUTES.VEHICLES,
+    icon: <Truck size={ICON_SIZE} />,
+    module: "fleet",
+  },
+  {
+    label: "Drivers",
+    path: ROUTES.DRIVERS,
+    icon: <Users size={ICON_SIZE} />,
+    module: "drivers",
+  },
+  {
+    label: "Trips",
+    path: ROUTES.TRIPS,
+    icon: <RouteIcon size={ICON_SIZE} />,
+    module: "trips",
+  },
+  {
+    label: "Maintenance",
+    path: ROUTES.MAINTENANCE,
+    icon: <Wrench size={ICON_SIZE} />,
+    module: "fleet",
+  },
+  {
+    label: "Fuel & Expenses",
+    path: ROUTES.EXPENSES,
+    icon: <Fuel size={ICON_SIZE} />,
+    module: "fuelExpenses",
+  },
+  {
+    label: "Analytics",
+    path: ROUTES.REPORTS,
+    icon: <BarChart3 size={ICON_SIZE} />,
+    module: "analytics",
+  },
+  {
+    label: "Settings",
+    path: ROUTES.SETTINGS,
+    icon: <SettingsIcon size={ICON_SIZE} />,
+    module: null,
+  },
+];
+
+export function AppLayout() {
+  const navigate = useNavigate();
+  const user = authService.getUser();
+
+  const nav = useMemo(
+    () =>
+      NAV_DEFINITIONS.filter(
+        (item) =>
+          item.module === null || permissionService.can(item.module, "view"),
+      ),
+
+    [user?.role],
+  );
 
   function handleLogout() {
-    authService.clearSession()
-    navigate('/login', { replace: true })
+    authService.clearSession();
+    navigate(ROUTES.LOGIN, { replace: true });
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      {/* Desktop sidebar */}
-      <Sidebar nav={NAV} user={user} onLogout={handleLogout} />
-
-      {/* Mobile top bar */}
-      <Navbar />
-
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto pt-[60px] md:pt-0">
-        <div className="p-8 animate-fade-up">
-          {children}
-        </div>
-      </main>
+    <div className="relative z-[1] min-h-screen md:pl-20">
+      <Sidebar nav={nav} user={user} onLogout={handleLogout} />
+      <div className="mx-auto max-w-[1600px] px-4 md:px-8">
+        <Navbar nav={nav} user={user} onLogout={handleLogout} />
+        <main className="pb-10 pt-4 md:pt-0">
+          <Outlet />
+        </main>
+      </div>
     </div>
-  )
+  );
 }
