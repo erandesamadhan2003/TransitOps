@@ -11,6 +11,10 @@ export const ENDPOINTS = {
     ANALYTICS: "/dashboard/analytics",
   },
 
+  SETTINGS: {
+    GENERAL: "/settings",
+  },
+
   VEHICLES: {
     LIST: "/vehicles",
     DETAIL: (id) => `/vehicles/${id}`,

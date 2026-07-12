@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { PublicRoute } from "./PublicRoute";
+import { RequirePermission } from "./RequirePermission";
 import { ROUTES } from "@/constants/routes";
 import { Loader } from "@/components/common";
 import NotFoundPage from "@/pages/NotFoundPage";
@@ -43,14 +44,69 @@ export default function AppRouter() {
           </Route>
 
           <Route element={<ProtectedRoute />}>
+            {/* Dashboard & Settings: no module restriction (all authenticated roles) */}
             <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-            <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
-            <Route path={ROUTES.DRIVERS} element={<DriversPage />} />
-            <Route path={ROUTES.TRIPS} element={<TripsPage />} />
-            <Route path={ROUTES.MAINTENANCE} element={<MaintenancePage />} />
-            <Route path={ROUTES.EXPENSES} element={<ExpensesPage />} />
-            <Route path={ROUTES.REPORTS} element={<ReportsPage />} />
             <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
+
+            {/* Fleet — Safety Officer has fleet:none → redirected to /dashboard */}
+            <Route
+              path={ROUTES.VEHICLES}
+              element={
+                <RequirePermission module="fleet">
+                  <VehiclesPage />
+                </RequirePermission>
+              }
+            />
+
+            {/* Maintenance lives under the "fleet" module in the RBAC matrix */}
+            <Route
+              path={ROUTES.MAINTENANCE}
+              element={
+                <RequirePermission module="fleet">
+                  <MaintenancePage />
+                </RequirePermission>
+              }
+            />
+
+            {/* Drivers — Dispatcher & Financial Analyst have drivers:none */}
+            <Route
+              path={ROUTES.DRIVERS}
+              element={
+                <RequirePermission module="drivers">
+                  <DriversPage />
+                </RequirePermission>
+              }
+            />
+
+            {/* Trips — Fleet Manager & Financial Analyst have trips:none */}
+            <Route
+              path={ROUTES.TRIPS}
+              element={
+                <RequirePermission module="trips">
+                  <TripsPage />
+                </RequirePermission>
+              }
+            />
+
+            {/* Fuel & Expenses — Dispatcher & Safety Officer have fuelExpenses:none */}
+            <Route
+              path={ROUTES.EXPENSES}
+              element={
+                <RequirePermission module="fuelExpenses">
+                  <ExpensesPage />
+                </RequirePermission>
+              }
+            />
+
+            {/* Analytics — Dispatcher & Safety Officer have analytics:none */}
+            <Route
+              path={ROUTES.REPORTS}
+              element={
+                <RequirePermission module="analytics">
+                  <ReportsPage />
+                </RequirePermission>
+              }
+            />
           </Route>
 
           <Route path="*" element={<NotFoundPage />} />
