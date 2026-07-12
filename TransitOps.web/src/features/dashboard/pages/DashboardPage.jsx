@@ -14,7 +14,7 @@ import { useDashboardKpis, useDashboardCharts } from "../hooks";
 import { useTrips } from "@/features/trips/hooks";
 import { DashboardFilters } from "../components/DashboardFilters";
 import { RecentTripsList } from "../components/RecentTripsList";
-import { StatusBreakdownBars } from "@/components/charts";
+import { StatusBreakdownBars, TripsBarChart, CostsBarChart } from "@/components/charts";
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState({});
@@ -26,6 +26,21 @@ export default function DashboardPage() {
     vehicleType: filters.vehicleType, 
     region: filters.region 
   });
+
+  const tripsChartData = (charts?.tripsPerMonth || []).map(item => ({
+    month: new Date(item.month).getMonth() + 1,
+    count: item.count
+  }));
+
+  const fuelChartData = (charts?.fuelCostPerMonth || []).map(item => ({
+    month: new Date(item.month).getMonth() + 1,
+    cost: parseFloat(item.totalCost)
+  }));
+
+  const maintenanceChartData = (charts?.maintenanceCostPerMonth || []).map(item => ({
+    month: new Date(item.month).getMonth() + 1,
+    cost: parseFloat(item.totalCost)
+  }));
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -111,6 +126,31 @@ export default function DashboardPage() {
                     retired: kpis.retiredVehicles,
                   }} 
                 />
+              </Card>
+            </div>
+          )}
+
+          {charts && (
+            <div className="grid gap-4 lg:grid-cols-3">
+              <Card>
+                <CardHeader title="Trips Volume (6 Months)" />
+                <div className="pt-2">
+                  <TripsBarChart data={tripsChartData} />
+                </div>
+              </Card>
+
+              <Card>
+                <CardHeader title="Fuel Costs (6 Months)" />
+                <div className="pt-2">
+                  <CostsBarChart data={fuelChartData} />
+                </div>
+              </Card>
+
+              <Card>
+                <CardHeader title="Maintenance Costs (6 Months)" />
+                <div className="pt-2">
+                  <CostsBarChart data={maintenanceChartData} />
+                </div>
               </Card>
             </div>
           )}
