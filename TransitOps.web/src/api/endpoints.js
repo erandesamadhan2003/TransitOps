@@ -31,6 +31,8 @@ export const ENDPOINTS = {
     SAFETY_SCORE: (id) => `/drivers/${id}/safety-score`,
     SUSPEND: (id) => `/drivers/${id}/suspend`,
     REINSTATE: (id) => `/drivers/${id}/reinstate`,
+    OFF_DUTY: (id) => `/drivers/${id}/off-duty`,
+    WAKE: (id) => `/drivers/${id}/wake`,
   },
 
   TRIPS: {
@@ -65,10 +67,14 @@ export const ENDPOINTS = {
 
   USERS: {
     LIST: "/users",
+    CREATE: "/users",
     DETAIL: (id) => `/users/${id}`,
     UPDATE: (id) => `/users/${id}`,
+    DELETE: (id) => `/users/${id}`,
     CHANGE_PASSWORD: (id) => `/users/${id}/password`,
     DEACTIVATE: (id) => `/users/${id}/deactivate`,
     ACTIVATE: (id) => `/users/${id}/activate`,
+    IMPORT_TEMPLATE: "/users/import-template",
+    IMPORT: "/users/import",
   },
 };

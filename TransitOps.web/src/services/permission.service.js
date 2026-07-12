@@ -35,14 +35,15 @@ const PERMISSION_MATRIX = {
 export const permissionService = {
   hasRole(...roles) {
     const user = authService.getUser();
-    if (!user?.role) return false;
-    return roles.includes(user.role);
+    if (!user?.roleName) return false;
+    return roles.includes(user.roleName);
   },
 
   levelFor(module) {
     const user = authService.getUser();
-    if (!user?.role) return "none";
-    return PERMISSION_MATRIX[user.role]?.[module] ?? "none";
+    if (!user?.roleName) return "none";
+    if (user.roleName === ROLES.ADMIN) return "edit";
+    return PERMISSION_MATRIX[user.roleName]?.[module] ?? "none";
   },
 
   can(module, action = "view") {

@@ -1,53 +1,65 @@
-# TransitOps API 
+# TransitOps API
 
-A comprehensive backend ERP API for fleet and transit operations.
+Production-ready Express.js REST API for the TransitOps fleet management platform.
 
 ## Features
 
-- **RBAC & Authentication**: JWT-based login with role-based access control (Admin, Fleet Manager, Dispatcher, Safety Officer, Financial Analyst).
-- **Vehicle & Driver Management**: Status tracking, photo uploads, and document management (PDFs/Images).
-- **Trip Operations**: Draft, dispatch, and complete trips with atomic state locking.
-- **Maintenance & Fuel Logs**: Cost tracking and fleet utilization.
-- **Settings & CSV Exports**: Global configurations and data export capabilities.
-- **Scheduled Jobs**: Daily cron jobs for license-expiry email reminders.
+- **RBAC & Authentication**: JWT login, bcrypt password hashing, rate-limiting (5 attempts → 15-min lockout), role-based access per route.
+- **Vehicle Management**: Full CRUD, status tracking (Available / On Trip / In Shop / Retired), photo upload, document management.
+- **Driver Management**: Full CRUD, 4-state status (`Available`, `On Trip`, `Off Duty`, `Suspended`), suspend/reinstate/off-duty/wake endpoints, safety score updates, license expiry tracking, document management.
+- **Trip Lifecycle**: Draft → Dispatch → Complete/Cancel with atomic status locking; completes update vehicle odometer and driver status automatically.
+- **Maintenance Logs**: Create (sets vehicle to `In Shop`), close (returns vehicle to `Available`), cost tracking.
+- **Fuel Logs & Expenses**: Per-vehicle fuel fill records and general expense categories.
+- **Dashboard Analytics**: Aggregated KPIs, vehicle status breakdown, recent trips, filters by type/status/region.
+- **Reports / Analytics**: Fleet utilization, revenue trends, cost breakdown (served to Recharts on frontend).
+- **Settings**: Depot name, currency, distance unit stored in DB; GET/PATCH `/settings`.
+- **User Management**: Full CRUD + role assignment + bulk import via Excel (`/users/import`) + template download.
+- **Documents**: Upload insurance/RC/permit/license scan PDFs for vehicles and drivers; expiry date tracking.
+- **Scheduled Jobs**: Daily cron for license-expiry email reminders (requires SMTP config).
 
 ## Documentation
 
-Full endpoint documentation is available in [api.md](./api.md).
+Full endpoint reference: [api.md](./api.md)
 
 ## Default Seeded Accounts
 
-After running the database seed (`npm run seed`), several test accounts will be created for each role (e.g., `admin@transitops.com`, `fleet@transitops.com`, `dispatcher@transitops.com`).
-The default password for all seeded accounts is: **`password123`**
+| Role              | Email                      | Password    |
+|-------------------|----------------------------|-------------|
+| Admin             | admin@transitops.com       | password123 |
+| Fleet Manager     | fleet@transitops.com       | password123 |
+| Dispatcher        | dispatcher@transitops.com  | password123 |
+| Safety Officer    | safety@transitops.com      | password123 |
+| Financial Analyst | finance@transitops.com     | password123 |
 
 ## Developer Setup
 
-You can use either `bun` or `npm`.
+### 1. Environment
 
-### Environment Configuration
-First, copy the example environment file and fill in the necessary details (such as your Postgres URL and optional SMTP settings).
 ```bash
-cp .env.example .env 
+cp .env.example .env
+# Fill in: DB_URL (PostgreSQL), JWT_SECRET, optional SMTP_* settings
 ```
 
-### Installation & Startup
+### 2. Install & Migrate
 
-**Using npm:**
 ```bash
-npm install                       # Install dependencies
-docker-compose up -d postgres     # Start PostgreSQL database (if using Docker)
-npm run drop                      # Drop all tables (if resetting database)
-npm run migrate                   # Run DB schema migrations 
-npm run seed                      # Run DB seeds (Roles, Users, Demo Data)
-npm run dev                       # Start dev server on port 5000 (uses nodemon)
+# Using bun (recommended):
+bun install
+bun run migrate        # schema + seeds
+bun run dev            # dev server on port 5000
+
+# Using npm:
+npm install
+npm run migrate
+npm run dev
 ```
 
-**Using bun:**
+### 3. Optional Docker (PostgreSQL only)
+
 ```bash
-bun install                       
-docker-compose up -d postgres     
-bun run drop                      
-bun run migrate                   
-bun run seed                      
-bun run dev                       
+docker-compose up -d postgres
 ```
+
+## Roles
+
+`Admin` · `Fleet Manager` · `Dispatcher` · `Safety Officer` · `Financial Analyst`

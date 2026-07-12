@@ -76,3 +76,33 @@ export function useReinstateDriver() {
       toast.error(err.message || "Could not reinstate driver."),
   });
 }
+
+export function useSetOffDuty() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: driversApi.setOffDuty,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      toast.success("Driver set to Off Duty.");
+    },
+    onError: (err) =>
+      toast.error(err.message || "Could not change driver status."),
+  });
+}
+
+export function useWakeDriver() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: driversApi.wake,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-kpis"] });
+      toast.success("Driver returned to Available.");
+    },
+    onError: (err) =>
+      toast.error(err.message || "Could not change driver status."),
+  });
+}

@@ -4,7 +4,7 @@ export const findAll = async ({ vehicleId, tripId, dateFrom, dateTo, limit, offs
     let query = `
         SELECT f.id, f.vehicle_id as "vehicleId", f.trip_id as "tripId", 
                f.liters, f.cost, f.log_date as "logDate", 
-               f.created_at as "createdAt", f.updated_at as "updatedAt",
+               f.created_at as "createdAt",
                v.registration_number as "vehicleRegistration"
         FROM fuel_logs f
         JOIN vehicles v ON f.vehicle_id = v.id
@@ -73,7 +73,7 @@ export const findById = async (id) => {
     const query = `
         SELECT f.id, f.vehicle_id as "vehicleId", f.trip_id as "tripId", 
                f.liters, f.cost, f.log_date as "logDate", 
-               f.created_at as "createdAt", f.updated_at as "updatedAt",
+               f.created_at as "createdAt",
                v.registration_number as "vehicleRegistration"
         FROM fuel_logs f
         JOIN vehicles v ON f.vehicle_id = v.id

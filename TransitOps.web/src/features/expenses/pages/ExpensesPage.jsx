@@ -51,10 +51,10 @@ function FuelLogModal({ open, onClose, vehicles }) {
           label="Vehicle"
           placeholder="Select vehicle"
           containerClassName="sm:col-span-2"
-          options={vehicles.map((v) => ({
+          options={Array.isArray(vehicles) ? vehicles.map((v) => ({
             value: v.id,
             label: `${v.vehicleName} (${v.registrationNumber})`,
-          }))}
+          })) : []}
           {...register("vehicleId")}
         />
         <Input label="Date" type="date" {...register("logDate")} />
@@ -107,10 +107,10 @@ function ExpenseModal({ open, onClose, vehicles }) {
           label="Vehicle (optional)"
           placeholder="Select vehicle"
           containerClassName="sm:col-span-2"
-          options={vehicles.map((v) => ({
+          options={Array.isArray(vehicles) ? vehicles.map((v) => ({
             value: v.id,
             label: `${v.vehicleName} (${v.registrationNumber})`,
-          }))}
+          })) : []}
           {...register("vehicleId")}
         />
         <Select
@@ -135,8 +135,11 @@ export default function ExpensesPage() {
   const { data: expenses = [] } = useExpenses();
   const { data: vehicles = [] } = useVehicles();
 
-  const totalFuelCost = fuelLogs.reduce((s, f) => s + Number(f.cost || 0), 0);
-  const totalExpenses = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+  const resolvedFuelLogs = Array.isArray(fuelLogs) ? fuelLogs : (fuelLogs?.logs || fuelLogs?.data || []);
+  const resolvedExpenses = Array.isArray(expenses) ? expenses : (expenses?.expenses || expenses?.data || []);
+
+  const totalFuelCost = resolvedFuelLogs.reduce((s, f) => s + Number(f.cost || 0), 0);
+  const totalExpenses = resolvedExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
   const totalOp = totalFuelCost + totalExpenses;
 
   return (
@@ -185,7 +188,7 @@ export default function ExpensesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {fuelLogs.map((log) => (
+                  {resolvedFuelLogs.map((log) => (
                     <tr key={log.id} className="border-b border-border/60 last:border-0">
                       <td className="py-2.5 pr-3">{log.vehicleName ?? log.vehicleId}</td>
                       <td className="py-2.5 pr-3 text-text-secondary">{log.logDate?.slice(0, 10)}</td>
@@ -193,7 +196,7 @@ export default function ExpensesPage() {
                       <td className="py-2.5 text-right font-medium">{formatCurrency(log.cost)}</td>
                     </tr>
                   ))}
-                  {!fuelLogs.length && (
+                  {!resolvedFuelLogs.length && (
                     <tr>
                       <td colSpan={4} className="py-8 text-center text-text-secondary">No fuel logs yet.</td>
                     </tr>
@@ -217,7 +220,7 @@ export default function ExpensesPage() {
                 </tr>
               </thead>
               <tbody>
-                {expenses.map((exp) => (
+                {resolvedExpenses.map((exp) => (
                   <tr key={exp.id} className="border-b border-border/60 last:border-0">
                     <td className="py-2.5 pr-3">{exp.category}</td>
                     <td className="py-2.5 pr-3 text-text-secondary">{exp.expenseDate?.slice(0, 10)}</td>
@@ -225,7 +228,7 @@ export default function ExpensesPage() {
                     <td className="py-2.5 text-right font-medium">{formatCurrency(exp.amount)}</td>
                   </tr>
                 ))}
-                {!expenses.length && (
+                {!resolvedExpenses.length && (
                   <tr>
                     <td colSpan={4} className="py-8 text-center text-text-secondary">No expenses yet.</td>
                   </tr>

@@ -76,6 +76,24 @@ export const reinstate = async (req, res, next) => {
     }
 };
 
+export const setOffDuty = async (req, res, next) => {
+    try {
+        const driver = await driversService.setOffDuty(req.params.id);
+        return success(res, { message: 'Driver set to Off Duty', data: driver });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const wakeDriver = async (req, res, next) => {
+    try {
+        const driver = await driversService.wakeDriver(req.params.id);
+        return success(res, { message: 'Driver returned to Available', data: driver });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const uploadPhoto = async (req, res, next) => {
     try {
         if (!req.file) {

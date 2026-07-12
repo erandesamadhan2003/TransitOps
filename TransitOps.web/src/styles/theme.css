@@ -100,3 +100,49 @@
   0%   { opacity: 0; transform: translateY(20px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Dark Mode Overrides ─────────────────────────────── */
+.dark {
+  --color-canvas:          #0d1520;
+  --color-surface:         #111d2b;
+  --color-surface-raised:  #17263a;
+
+  --color-text-primary:    #e8f0f8;
+  --color-text-secondary:  #8aabcb;
+  --color-text-tertiary:   #4a6a8a;
+  --color-text-inverse:    #0d1520;
+
+  --color-border:          rgba(255,255,255,0.08);
+  --color-border-strong:   rgba(255,255,255,0.14);
+
+  --color-ink-50:          #12202f;
+  --color-ink-100:         #1a2e40;
+}
+
+.dark body,
+.dark html {
+  background: linear-gradient(140deg, #0a1520 0%, #0d1b2a 50%, #0e1e30 100%);
+  color: var(--color-text-primary);
+}
+
+.dark .glass-card {
+  background: rgba(17, 29, 43, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255,255,255,0.04) inset;
+}
+
+.dark .glass-elevated {
+  background: rgba(23, 38, 58, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 48px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255,255,255,0.06) inset;
+}
+
+.dark .glass-sidebar {
+  background: rgba(11, 20, 30, 0.75);
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}

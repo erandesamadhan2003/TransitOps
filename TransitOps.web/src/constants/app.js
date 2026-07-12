@@ -14,6 +14,11 @@ export const ROLE_LABELS = {
   [ROLES.FINANCIAL_ANALYST]: "Financial Analyst",
 };
 
+export const ROLE_OPTIONS = Object.entries(ROLE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
+
 export const VEHICLE_STATUS = {
   AVAILABLE: "Available",
   ON_TRIP: "On Trip",
@@ -39,12 +44,14 @@ export const VEHICLE_TYPES = [
 export const DRIVER_STATUS = {
   AVAILABLE: "Available",
   ON_TRIP: "On Trip",
+  OFF_DUTY: "Off Duty",
   SUSPENDED: "Suspended",
 };
 
 export const DRIVER_STATUS_LABELS = {
   [DRIVER_STATUS.AVAILABLE]: "Available",
   [DRIVER_STATUS.ON_TRIP]: "On Trip",
+  [DRIVER_STATUS.OFF_DUTY]: "Off Duty",
   [DRIVER_STATUS.SUSPENDED]: "Suspended",
 };
 

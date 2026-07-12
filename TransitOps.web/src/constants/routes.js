@@ -8,6 +8,7 @@ export const ROUTES = {
   EXPENSES: "/fuel-expenses",
   REPORTS: "/analytics",
   SETTINGS: "/settings",
+  USERS: "/users",
 };
 
 export function buildRoute(route, params = {}) {

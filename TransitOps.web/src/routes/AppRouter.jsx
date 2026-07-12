@@ -27,6 +27,7 @@ const ReportsPage = lazy(() => import("@/features/reports/pages/ReportsPage"));
 const SettingsPage = lazy(
   () => import("@/features/settings/pages/SettingsPage"),
 );
+const UsersPage = lazy(() => import("@/features/users/pages/UsersPage"));
 
 function PageFallback() {
   return <Loader fullHeight label="Loading page…" />;
@@ -46,7 +47,22 @@ export default function AppRouter() {
           <Route element={<ProtectedRoute />}>
             {/* Dashboard & Settings: no module restriction (all authenticated roles) */}
             <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-            <Route path={ROUTES.SETTINGS} element={<SettingsPage />} />
+            <Route 
+              path={ROUTES.SETTINGS} 
+              element={
+                <RequirePermission module={null}>
+                  <SettingsPage />
+                </RequirePermission>
+              } 
+            />
+            <Route 
+              path={ROUTES.USERS} 
+              element={
+                <RequirePermission module={null}>
+                  <UsersPage />
+                </RequirePermission>
+              } 
+            />
 
             {/* Fleet — Safety Officer has fleet:none → redirected to /dashboard */}
             <Route

@@ -7,11 +7,19 @@ import {
   Users,
   Search,
   AlertTriangle,
+  MoonStar,
+  Sun,
 } from "lucide-react";
 import { Card, StatusBadge } from "@/components/ui";
 import { Button, Table, ConfirmDialog } from "@/components/common";
 import { Select } from "@/components/forms";
-import { useDrivers, useSuspendDriver, useReinstateDriver } from "../hooks";
+import {
+  useDrivers,
+  useSuspendDriver,
+  useReinstateDriver,
+  useSetOffDuty,
+  useWakeDriver,
+} from "../hooks";
 import { DriverFormModal } from "../components/DriverFormModal";
 import { useDebounce } from "@/hooks";
 import { permissionService } from "@/services/permission.service";
@@ -29,11 +37,12 @@ export default function DriversPage() {
   } = useDrivers({ ...filters, search: debouncedSearch });
   const suspendDriver = useSuspendDriver();
   const reinstateDriver = useReinstateDriver();
+  const setOffDutyhook = useSetOffDuty();
+  const wakeDriver = useWakeDriver();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState(null);
-  const [confirmSuspend, setConfirmSuspend] = useState(null);
-  const [confirmReinstate, setConfirmReinstate] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null); // { type, driver }
 
   function openCreate() {
     setEditingDriver(null);
@@ -45,6 +54,51 @@ export default function DriversPage() {
   }
 
   const isExpired = (expiry) => expiry && new Date(expiry) < new Date();
+
+  function handleConfirm() {
+    if (!pendingAction) return;
+    const { type, driver } = pendingAction;
+    const mutationMap = {
+      suspend: suspendDriver,
+      reinstate: reinstateDriver,
+      offDuty: setOffDutyhook,
+      wake: wakeDriver,
+    };
+    mutationMap[type].mutate(driver.id, { onSuccess: () => setPendingAction(null) });
+  }
+
+  const isPending =
+    suspendDriver.isPending ||
+    reinstateDriver.isPending ||
+    setOffDutyhook.isPending ||
+    wakeDriver.isPending;
+
+  const ACTION_META = {
+    suspend: {
+      title: (d) => `Suspend ${d.name}?`,
+      description: "Suspended drivers cannot be assigned to new trips.",
+      confirmLabel: "Suspend Driver",
+      tone: "danger",
+    },
+    reinstate: {
+      title: (d) => `Reinstate ${d.name}?`,
+      description: "This will return the driver to Available status.",
+      confirmLabel: "Reinstate Driver",
+      tone: "secondary",
+    },
+    offDuty: {
+      title: (d) => `Set ${d.name} Off Duty?`,
+      description: "The driver will be unavailable for dispatch but not suspended.",
+      confirmLabel: "Set Off Duty",
+      tone: "secondary",
+    },
+    wake: {
+      title: (d) => `Return ${d.name} to Available?`,
+      description: "The driver will be available for new trip assignments.",
+      confirmLabel: "Set Available",
+      tone: "secondary",
+    },
+  };
 
   const columns = useMemo(
     () => [
@@ -99,52 +153,84 @@ export default function DriversPage() {
             {
               header: "",
               id: "actions",
-              cell: ({ row }) => (
-                <div className="flex justify-end gap-1">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEdit(row.original);
-                    }}
-                    aria-label={`Edit ${row.original.name}`}
-                    className="rounded-lg p-1.5 text-text-tertiary hover:bg-ink-50 hover:text-ink-600"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  {row.original.status !== DRIVER_STATUS.SUSPENDED ? (
+              cell: ({ row }) => {
+                const d = row.original;
+                const isOnTrip = d.status === DRIVER_STATUS.ON_TRIP;
+                return (
+                  <div className="flex justify-end gap-1">
                     <button
                       type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConfirmSuspend(row.original);
-                      }}
-                      aria-label={`Suspend ${row.original.name}`}
-                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-red-50 hover:text-red-600"
+                      onClick={(e) => { e.stopPropagation(); openEdit(d); }}
+                      aria-label={`Edit ${d.name}`}
+                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-ink-50 hover:text-ink-600"
                     >
-                      <Ban size={14} />
+                      <Pencil size={14} />
                     </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConfirmReinstate(row.original);
-                      }}
-                      aria-label={`Reinstate ${row.original.name}`}
-                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-green-50 hover:text-green-600"
-                    >
-                      <CheckCircle size={14} />
-                    </button>
-                  )}
-                </div>
-              ),
+
+                    {d.status === DRIVER_STATUS.AVAILABLE && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "offDuty", driver: d }); }}
+                        aria-label={`Set ${d.name} Off Duty`}
+                        title="Set Off Duty"
+                        className="rounded-lg p-1.5 text-text-tertiary hover:bg-amber-50 hover:text-amber-600"
+                      >
+                        <MoonStar size={14} />
+                      </button>
+                    )}
+
+                    {d.status === DRIVER_STATUS.OFF_DUTY && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "wake", driver: d }); }}
+                        aria-label={`Return ${d.name} to Available`}
+                        title="Return to Available"
+                        className="rounded-lg p-1.5 text-text-tertiary hover:bg-teal-50 hover:text-teal-600"
+                      >
+                        <Sun size={14} />
+                      </button>
+                    )}
+
+                    {(d.status === DRIVER_STATUS.AVAILABLE || d.status === DRIVER_STATUS.OFF_DUTY) && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "suspend", driver: d }); }}
+                        aria-label={`Suspend ${d.name}`}
+                        title="Suspend"
+                        className="rounded-lg p-1.5 text-text-tertiary hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Ban size={14} />
+                      </button>
+                    )}
+
+                    {d.status === DRIVER_STATUS.SUSPENDED && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "reinstate", driver: d }); }}
+                        aria-label={`Reinstate ${d.name}`}
+                        title="Reinstate"
+                        className="rounded-lg p-1.5 text-text-tertiary hover:bg-green-50 hover:text-green-600"
+                      >
+                        <CheckCircle size={14} />
+                      </button>
+                    )}
+
+                    {isOnTrip && (
+                      <span className="px-2 py-1 rounded text-[11px] text-ink-500 bg-ink-50">
+                        On Trip
+                      </span>
+                    )}
+                  </div>
+                );
+              },
             },
           ]
         : []),
     ],
     [canEdit],
   );
+
+  const meta = pendingAction && ACTION_META[pendingAction.type];
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -214,8 +300,7 @@ export default function DriversPage() {
         />
         <p className="mt-4 flex items-center gap-1.5 text-xs text-amber-700">
           <Users size={13} />
-          Rule: Suspended drivers and those with expired licenses cannot be
-          dispatched.
+          Rule: Suspended and Off Duty drivers cannot be dispatched. On Trip status is system-managed.
         </p>
       </Card>
 
@@ -228,32 +313,14 @@ export default function DriversPage() {
       )}
 
       <ConfirmDialog
-        open={Boolean(confirmSuspend)}
-        onClose={() => setConfirmSuspend(null)}
-        onConfirm={() =>
-          suspendDriver.mutate(confirmSuspend.id, {
-            onSuccess: () => setConfirmSuspend(null),
-          })
-        }
-        title={`Suspend ${confirmSuspend?.name}?`}
-        description="Suspended drivers cannot be assigned to new trips."
-        confirmLabel="Suspend Driver"
-        loading={suspendDriver.isPending}
-      />
-
-      <ConfirmDialog
-        open={Boolean(confirmReinstate)}
-        onClose={() => setConfirmReinstate(null)}
-        onConfirm={() =>
-          reinstateDriver.mutate(confirmReinstate.id, {
-            onSuccess: () => setConfirmReinstate(null),
-          })
-        }
-        title={`Reinstate ${confirmReinstate?.name}?`}
-        description="This will return the driver to Available status."
-        confirmLabel="Reinstate Driver"
-        loading={reinstateDriver.isPending}
-        tone="secondary"
+        open={Boolean(pendingAction)}
+        onClose={() => setPendingAction(null)}
+        onConfirm={handleConfirm}
+        title={meta?.title(pendingAction?.driver) ?? ""}
+        description={meta?.description ?? ""}
+        confirmLabel={meta?.confirmLabel ?? "Confirm"}
+        loading={isPending}
+        tone={meta?.tone}
       />
     </div>
   );

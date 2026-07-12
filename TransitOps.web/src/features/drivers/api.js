@@ -21,4 +21,10 @@ export const driversApi = {
 
   reinstate: (id) =>
     api.patch(ENDPOINTS.DRIVERS.REINSTATE(id)).then((r) => r.data.data || r.data),
+
+  setOffDuty: (id) =>
+    api.patch(ENDPOINTS.DRIVERS.OFF_DUTY(id)).then((r) => r.data.data || r.data),
+
+  wake: (id) =>
+    api.patch(ENDPOINTS.DRIVERS.WAKE(id)).then((r) => r.data.data || r.data),
 };

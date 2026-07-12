@@ -120,6 +120,33 @@ export const reinstateDriver = async (id) => {
     return { ...driver, status: 'Available' };
 };
 
+export const setOffDuty = async (id) => {
+    const driver = await driversModel.findById(id);
+    if (!driver) throw new NotFoundError('Driver not found');
+
+    if (driver.status === 'On Trip') {
+        throw new ConflictError('Cannot set a driver Off Duty while they are on a trip');
+    }
+    if (driver.status === 'Suspended') {
+        throw new ConflictError('Cannot set a suspended driver Off Duty; reinstate first');
+    }
+
+    await driversModel.updateStatus(id, 'Off Duty');
+    return { ...driver, status: 'Off Duty' };
+};
+
+export const wakeDriver = async (id) => {
+    const driver = await driversModel.findById(id);
+    if (!driver) throw new NotFoundError('Driver not found');
+
+    if (driver.status !== 'Off Duty') {
+        throw new ConflictError('Driver is not currently Off Duty');
+    }
+
+    await driversModel.updateStatus(id, 'Available');
+    return { ...driver, status: 'Available' };
+};
+
 export const uploadDriverPhoto = async (id, file) => {
     const driver = await driversModel.findById(id);
     if (!driver) throw new NotFoundError('Driver not found');

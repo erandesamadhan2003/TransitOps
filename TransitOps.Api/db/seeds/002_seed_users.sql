@@ -5,3 +5,4 @@ INSERT INTO users (full_name, email, password_hash, role_id) VALUES
 ('Safety Officer', 'safety@transitops.com', '$2b$10$7E0R6LtukM7CwtHDPHVFlOKp.VkyJc0Wjcz7jD9mxiPFSiHG/SYLy', (SELECT id FROM roles WHERE name = 'Safety Officer')),
 ('Financial Analyst', 'finance@transitops.com', '$2b$10$7E0R6LtukM7CwtHDPHVFlOKp.VkyJc0Wjcz7jD9mxiPFSiHG/SYLy', (SELECT id FROM roles WHERE name = 'Financial Analyst'))
 ON CONFLICT (email) DO NOTHING;
+q   

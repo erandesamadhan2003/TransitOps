@@ -11,6 +11,7 @@ import {
 import { Card, CardHeader, StatCard } from "@/components/ui";
 import { Loader, ErrorState } from "@/components/common";
 import { useDashboardKpis, useDashboardCharts } from "../hooks";
+import { useTrips } from "@/features/trips/hooks";
 import { DashboardFilters } from "../components/DashboardFilters";
 import { RecentTripsList } from "../components/RecentTripsList";
 import { StatusBreakdownBars } from "@/components/charts";
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const [filters, setFilters] = useState({});
   const { data: kpis, isLoading, error, refetch } = useDashboardKpis(filters);
   const { data: charts } = useDashboardCharts();
+  const { data: tripsData } = useTrips({ page: 1, pageSize: 5 });
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -88,15 +90,22 @@ export default function DashboardPage() {
             <div className="grid gap-4 lg:grid-cols-3">
               <Card className="lg:col-span-2">
                 <CardHeader
-                  title="Trips per Month"
-                  subtitle="Historical dispatch activity"
+                  title="Recent Trips"
+                  subtitle="Latest dispatch activity"
                 />
-                <RecentTripsList trips={charts.tripsPerMonth} />
+                <RecentTripsList trips={tripsData?.trips || []} />
               </Card>
 
               <Card>
                 <CardHeader title="Vehicle Utilization" />
-                <StatusBreakdownBars data={charts.vehicleUtilization} />
+                <StatusBreakdownBars 
+                  data={{
+                    available: kpis.availableVehicles,
+                    on_trip: kpis.activeVehicles,
+                    in_shop: kpis.vehiclesInShop,
+                    retired: kpis.retiredVehicles,
+                  }} 
+                />
               </Card>
             </div>
           )}

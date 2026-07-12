@@ -414,6 +414,22 @@ Reinstates a suspended driver.
 - **Error Responses**:
   - `409 Conflict`: Cannot reinstate if their license is expired.
 
+### `PATCH /api/drivers/:id/off-duty`
+Sets an Available driver to Off Duty (manually unavailable, but not suspended).
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`, `Safety Officer`
+- **Response (200 OK)**: Returns the updated driver with `status: Off Duty`.
+- **Error Responses**:
+  - `409 Conflict`: Driver is `On Trip` or `Suspended`.
+
+### `PATCH /api/drivers/:id/wake`
+Returns an Off Duty driver to Available status.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`, `Safety Officer`
+- **Response (200 OK)**: Returns the updated driver with `status: Available`.
+- **Error Responses**:
+  - `409 Conflict`: Driver is not currently `Off Duty`.
+
 ### `POST /api/drivers/:id/photo`
 Uploads a photo for the driver.
 - **Auth Required**: Yes (`Bearer <token>`)
