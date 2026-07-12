@@ -160,3 +160,58 @@ export const isReferencedByTrips = async (id) => {
     const { rows } = await db.query(query, [id]);
     return rows.length > 0;
 };
+
+export const countByStatus = async ({ vehicleType, region } = {}) => {
+    let query = `SELECT status, COUNT(*)::int as count FROM vehicles WHERE 1=1`;
+    const params = [];
+    let paramIndex = 1;
+
+    if (vehicleType) {
+        query += ` AND vehicle_type = $${paramIndex++}`;
+        params.push(vehicleType);
+    }
+    if (region) {
+        query += ` AND region = $${paramIndex++}`;
+        params.push(region);
+    }
+    
+    query += ` GROUP BY status`;
+    const { rows } = await db.query(query, params);
+    return rows;
+};
+
+export const fleetUtilization = async ({ vehicleType, region } = {}) => {
+    let query = `
+        SELECT 
+            COUNT(*) FILTER (WHERE status = 'On Trip')::int AS on_trip, 
+            COUNT(*) FILTER (WHERE status != 'Retired')::int AS active_total 
+        FROM vehicles 
+        WHERE 1=1
+    `;
+    const params = [];
+    let paramIndex = 1;
+
+    if (vehicleType) {
+        query += ` AND vehicle_type = $${paramIndex++}`;
+        params.push(vehicleType);
+    }
+    if (region) {
+        query += ` AND region = $${paramIndex++}`;
+        params.push(region);
+    }
+
+    const { rows } = await db.query(query, params);
+    return rows[0];
+};
+
+export const utilizationPerVehicle = async () => {
+    const query = `
+        SELECT v.registration_number as "registrationNumber", COUNT(t.id)::int as "tripCount"
+        FROM vehicles v
+        LEFT JOIN trips t ON v.id = t.vehicle_id
+        GROUP BY v.id, v.registration_number
+        ORDER BY "tripCount" DESC
+    `;
+    const { rows } = await db.query(query);
+    return rows;
+};

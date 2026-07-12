@@ -1,4 +1,4 @@
-CREATE TABLE expenses (
+CREATE TABLE IF NOT EXISTS expenses (
     id SERIAL PRIMARY KEY,
     vehicle_id INTEGER REFERENCES vehicles(id),
     trip_id INTEGER REFERENCES trips(id),
@@ -10,5 +10,5 @@ CREATE TABLE expenses (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_expenses_vehicle ON expenses(vehicle_id);
-CREATE INDEX idx_expenses_category ON expenses(category);
+CREATE INDEX IF NOT EXISTS idx_expenses_vehicle ON expenses(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category);

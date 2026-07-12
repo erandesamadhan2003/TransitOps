@@ -1,4 +1,4 @@
-CREATE TABLE drivers (
+CREATE TABLE IF NOT EXISTS drivers (
     id SERIAL PRIMARY KEY,
     name VARCHAR(150) NOT NULL,
     license_number VARCHAR(50) UNIQUE NOT NULL,
@@ -13,5 +13,5 @@ CREATE TABLE drivers (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_drivers_status ON drivers(status);
-CREATE INDEX idx_drivers_license_expiry ON drivers(license_expiry);
+CREATE INDEX IF NOT EXISTS idx_drivers_status ON drivers(status);
+CREATE INDEX IF NOT EXISTS idx_drivers_license_expiry ON drivers(license_expiry);

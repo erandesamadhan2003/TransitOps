@@ -371,3 +371,277 @@ Uploads a photo for the driver.
 - **Response (200 OK)**: Returns the updated driver with the new `photoPath`.
 - **Error Responses**:
   - `400 Bad Request`: No photo uploaded, or invalid file type.
+
+---
+
+## Trips (`/api/trips`)
+
+### `GET /api/trips`
+Lists trips with optional filtering and pagination. Also joins vehicle and driver data to return readable names.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Query Parameters**:
+  - `status` (string, optional: `Draft`, `Dispatched`, `Completed`, `Cancelled`)
+  - `vehicleId` (number, optional)
+  - `driverId` (number, optional)
+  - `dateFrom` (string ISO8601, optional)
+  - `dateTo` (string ISO8601, optional)
+  - `search` (string, optional: searches source and destination)
+  - `page` (number, optional, default: 1)
+  - `pageSize` (number, optional, default: 20)
+- **Response (200 OK)**: Returns a list of trips and pagination details.
+
+### `GET /api/trips/:id`
+Retrieves details of a specific trip.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Response (200 OK)**: Returns the trip object.
+- **Error Responses**:
+  - `404 Not Found`: Trip not found.
+
+### `POST /api/trips`
+Creates a new draft trip.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Dispatcher`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "source": "Warehouse A",
+    "destination": "Store B",
+    "vehicleId": 1,
+    "driverId": 2,
+    "cargoWeight": 4500,
+    "plannedDistance": 120.5
+  }
+  ```
+- **Response (201 Created)**: Returns the newly created trip with `status: Draft`.
+- **Error Responses**:
+  - `400 Bad Request`: Cargo weight exceeds the assigned vehicle's capacity.
+  - `404 Not Found`: Vehicle or Driver not found.
+
+### `PATCH /api/trips/:id/dispatch`
+Dispatches a draft trip, executing an atomic lock on the assigned vehicle and driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Dispatcher`
+- **Response (200 OK)**: Returns the updated trip with `status: Dispatched` and timestamps updated.
+- **Error Responses**:
+  - `409 Conflict`: Vehicle/Driver not available, driver license expired, or cargo weight violation.
+
+### `PATCH /api/trips/:id/complete`
+Completes a dispatched trip, releasing the locks on the assigned vehicle and driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Dispatcher`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "actualDistance": 122.0,
+    "fuelConsumed": 15.5
+  }
+  ```
+- **Response (200 OK)**: Returns the updated trip with `status: Completed`.
+- **Error Responses**:
+  - `409 Conflict`: Trip is not currently dispatched.
+
+### `PATCH /api/trips/:id/cancel`
+Cancels a trip. If the trip was currently dispatched, it atomically releases the locks on the vehicle and driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Dispatcher`
+- **Response (200 OK)**: Returns the updated trip with `status: Cancelled`.
+- **Error Responses**:
+  - `409 Conflict`: Trip is already completed or cancelled.
+
+---
+
+## Maintenance (`/api/maintenance`)
+
+### `GET /api/maintenance`
+Lists maintenance records with optional filtering and pagination. Joins vehicle data to return readable names and registration numbers.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Query Parameters**:
+  - `vehicleId` (number, optional)
+  - `status` (string, optional: `Open`, `Closed`)
+  - `dateFrom` (string ISO8601, optional)
+  - `dateTo` (string ISO8601, optional)
+  - `page` (number, optional, default: 1)
+  - `pageSize` (number, optional, default: 20)
+- **Response (200 OK)**: Returns a list of maintenance records and pagination details.
+
+### `GET /api/maintenance/:id`
+Retrieves details of a specific maintenance record.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Response (200 OK)**: Returns the maintenance record object.
+- **Error Responses**:
+  - `404 Not Found`: Record not found.
+
+### `POST /api/maintenance`
+Opens a new maintenance record and atomically locks the assigned vehicle in the shop.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "vehicleId": 1,
+    "issue": "Brake Replacement",
+    "description": "Replacing front and rear brake pads",
+    "cost": 150.00,
+    "startDate": "2026-07-15T00:00:00Z"
+  }
+  ```
+- **Response (201 Created)**: Returns the newly created record with `status: Open` and the vehicle enters `In Shop` status.
+- **Error Responses**:
+  - `409 Conflict`: Vehicle is currently `'On Trip'`, `'Retired'`, or already has another open maintenance record.
+  - `404 Not Found`: Vehicle not found.
+
+### `PATCH /api/maintenance/:id/close`
+Closes an open maintenance record and optionally updates final cost. Atomically restores the vehicle to 'Available' (unless it was retired).
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "endDate": "2026-07-16T12:00:00Z",
+    "cost": 250.00
+  }
+  ```
+- **Response (200 OK)**: Returns the updated record with `status: Closed`.
+- **Error Responses**:
+  - `409 Conflict`: Record is already closed.
+
+---
+
+## Fuel Logs (`/api/fuel-logs`)
+
+### `GET /api/fuel-logs`
+Lists fuel logs with optional filtering and pagination.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Query Parameters**:
+  - `vehicleId` (number, optional)
+  - `tripId` (number, optional)
+  - `dateFrom` (string ISO8601, optional)
+  - `dateTo` (string ISO8601, optional)
+  - `page` (number, optional, default: 1)
+  - `pageSize` (number, optional, default: 20)
+- **Response (200 OK)**: Returns a list of fuel logs.
+
+### `GET /api/fuel-logs/:id`
+Retrieves a specific fuel log.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Response (200 OK)**: Returns the fuel log object.
+
+### `POST /api/fuel-logs`
+Logs a new fuel purchase.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Dispatcher`, `Fleet Manager`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "vehicleId": 1,
+    "tripId": 2,
+    "liters": 50.5,
+    "cost": 120.75,
+    "logDate": "2026-07-16T10:00:00Z"
+  }
+  ```
+- **Response (201 Created)**: Returns the newly created log.
+
+### `DELETE /api/fuel-logs/:id`
+Hard deletes a fuel log. Used to correct errant entries.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin` ONLY
+- **Response (200 OK)**: Success message.
+
+---
+
+## Expenses (`/api/expenses`)
+
+### `GET /api/expenses`
+Lists general expenses with optional filtering and pagination.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Query Parameters**:
+  - `vehicleId` (number, optional)
+  - `tripId` (number, optional)
+  - `category` (string, optional: `Fuel`, `Maintenance`, `Toll`, `Parking`, `Other`)
+  - `dateFrom` (string ISO8601, optional)
+  - `dateTo` (string ISO8601, optional)
+  - `page` (number, optional, default: 1)
+  - `pageSize` (number, optional, default: 20)
+- **Response (200 OK)**: Returns a list of expenses.
+
+### `GET /api/expenses/:id`
+Retrieves a specific expense entry.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Response (200 OK)**: Returns the expense object.
+
+### `POST /api/expenses`
+Logs a new general expense. Fuel expenses are strictly rejected here to prevent double counting.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Dispatcher`, `Fleet Manager`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "vehicleId": 1,
+    "tripId": 2,
+    "category": "Toll",
+    "amount": 15.00,
+    "description": "Highway toll pass",
+    "expenseDate": "2026-07-16T11:30:00Z"
+  }
+  ```
+- **Response (201 Created)**: Returns the newly created expense.
+- **Error Responses**:
+  - `400 Bad Request`: If `category` is set to `"Fuel"`.
+
+### `DELETE /api/expenses/:id`
+Hard deletes an expense entry.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin` ONLY
+- **Response (200 OK)**: Success message.
+
+---
+
+## Dashboard (`/api/dashboard`)
+
+### `GET /api/dashboard/kpis`
+Retrieves high-level Key Performance Indicators (KPIs) aggregated across the entire system.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user (Universal Access)
+- **Query Parameters**:
+  - `vehicleType` (string, optional)
+  - `status` (string, optional)
+  - `region` (string, optional)
+- **Response (200 OK)**:
+  ```json
+  {
+    "activeVehicles": 12,
+    "availableVehicles": 5,
+    "vehiclesInShop": 2,
+    "retiredVehicles": 1,
+    "activeTrips": 12,
+    "pendingTrips": 3,
+    "driversAvailable": 6,
+    "driversOnTrip": 12,
+    "fleetUtilizationPercent": 70.58
+  }
+  ```
+
+### `GET /api/dashboard/charts`
+Retrieves time-series data and distribution metrics for rendering dashboard charts.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user (Universal Access)
+- **Query Parameters**:
+  - `monthsBack` (number, optional, default: 6)
+- **Response (200 OK)**:
+  ```json
+  {
+    "tripsPerMonth": [ { "month": "2026-07-01T00:00:00.000Z", "count": 45 } ],
+    "fuelCostPerMonth": [ { "month": "2026-07-01T00:00:00.000Z", "totalCost": 1250.00 } ],
+    "maintenanceCostPerMonth": [ { "month": "2026-07-01T00:00:00.000Z", "totalCost": 450.00 } ],
+    "vehicleUtilization": [ { "registrationNumber": "TRK-001", "tripCount": 15 } ]
+  }
+  ```

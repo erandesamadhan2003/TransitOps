@@ -1,4 +1,4 @@
-CREATE TABLE maintenance_logs (
+CREATE TABLE IF NOT EXISTS maintenance_logs (
     id SERIAL PRIMARY KEY,
     vehicle_id INTEGER NOT NULL REFERENCES vehicles(id),
     issue VARCHAR(200) NOT NULL,
@@ -12,5 +12,5 @@ CREATE TABLE maintenance_logs (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_maintenance_vehicle ON maintenance_logs(vehicle_id);
-CREATE INDEX idx_maintenance_status ON maintenance_logs(status);
+CREATE INDEX IF NOT EXISTS idx_maintenance_vehicle ON maintenance_logs(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_status ON maintenance_logs(status);

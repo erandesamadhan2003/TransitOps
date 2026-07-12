@@ -1,4 +1,4 @@
-CREATE TABLE trips (
+CREATE TABLE IF NOT EXISTS trips (
     id SERIAL PRIMARY KEY,
     source VARCHAR(200) NOT NULL,
     destination VARCHAR(200) NOT NULL,
@@ -18,6 +18,6 @@ CREATE TABLE trips (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_trips_status ON trips(status);
-CREATE INDEX idx_trips_vehicle ON trips(vehicle_id);
-CREATE INDEX idx_trips_driver ON trips(driver_id);
+CREATE INDEX IF NOT EXISTS idx_trips_status ON trips(status);
+CREATE INDEX IF NOT EXISTS idx_trips_vehicle ON trips(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_trips_driver ON trips(driver_id);

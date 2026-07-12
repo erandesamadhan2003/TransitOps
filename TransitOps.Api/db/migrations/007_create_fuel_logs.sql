@@ -1,4 +1,4 @@
-CREATE TABLE fuel_logs (
+CREATE TABLE IF NOT EXISTS fuel_logs (
     id SERIAL PRIMARY KEY,
     vehicle_id INTEGER NOT NULL REFERENCES vehicles(id),
     trip_id INTEGER REFERENCES trips(id),
@@ -8,4 +8,4 @@ CREATE TABLE fuel_logs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_fuel_vehicle ON fuel_logs(vehicle_id);
+CREATE INDEX IF NOT EXISTS idx_fuel_vehicle ON fuel_logs(vehicle_id);

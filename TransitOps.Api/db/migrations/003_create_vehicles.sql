@@ -1,4 +1,4 @@
-CREATE TABLE vehicles (
+CREATE TABLE IF NOT EXISTS vehicles (
     id SERIAL PRIMARY KEY,
     registration_number VARCHAR(50) UNIQUE NOT NULL,
     vehicle_name VARCHAR(150) NOT NULL,
@@ -15,4 +15,4 @@ CREATE TABLE vehicles (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX idx_vehicles_status ON vehicles(status);
+CREATE INDEX IF NOT EXISTS idx_vehicles_status ON vehicles(status);

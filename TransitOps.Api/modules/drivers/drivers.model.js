@@ -160,3 +160,9 @@ export const updatePhotoPath = async (id, photoPath) => {
     const query = `UPDATE drivers SET photo_path = $1, updated_at = now() WHERE id = $2`;
     await db.query(query, [photoPath, id]);
 };
+
+export const countByStatus = async () => {
+    let query = `SELECT status, COUNT(*)::int as count FROM drivers GROUP BY status`;
+    const { rows } = await db.query(query);
+    return rows;
+};
