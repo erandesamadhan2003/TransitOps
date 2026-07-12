@@ -5,7 +5,7 @@ export const findAll = async ({ status, vehicleId, driverId, search, dateFrom, d
         SELECT t.id, t.source, t.destination, t.vehicle_id as "vehicleId", t.driver_id as "driverId",
                t.cargo_weight as "cargoWeight", t.planned_distance as "plannedDistance",
                t.actual_distance as "actualDistance", t.fuel_consumed as "fuelConsumed",
-               t.status, t.dispatched_at as "dispatchedAt", t.completed_at as "completedAt",
+               t.revenue, t.status, t.dispatched_at as "dispatchedAt", t.completed_at as "completedAt",
                t.cancelled_at as "cancelledAt", t.created_by as "createdBy",
                t.created_at as "createdAt", t.updated_at as "updatedAt",
                v.registration_number as "vehicleRegistration", v.vehicle_name as "vehicleName",
@@ -101,7 +101,7 @@ export const findById = async (id, client = null) => {
         SELECT t.id, t.source, t.destination, t.vehicle_id as "vehicleId", t.driver_id as "driverId",
                t.cargo_weight as "cargoWeight", t.planned_distance as "plannedDistance",
                t.actual_distance as "actualDistance", t.fuel_consumed as "fuelConsumed",
-               t.status, t.dispatched_at as "dispatchedAt", t.completed_at as "completedAt",
+               t.revenue, t.status, t.dispatched_at as "dispatchedAt", t.completed_at as "completedAt",
                t.cancelled_at as "cancelledAt", t.created_by as "createdBy",
                t.created_at as "createdAt", t.updated_at as "updatedAt",
                v.registration_number as "vehicleRegistration", v.vehicle_name as "vehicleName",
@@ -150,15 +150,15 @@ export const updateStatus = async (id, status, timestampField, client) => {
     return rows[0];
 };
 
-export const updateCompletionDetails = async (id, { actualDistance, fuelConsumed }, client) => {
+export const updateCompletionDetails = async (id, { actualDistance, fuelConsumed, revenue }, client) => {
     if (!client) throw new Error('updateCompletionDetails requires a transaction client');
     
     const query = `
         UPDATE trips 
-        SET actual_distance = $1, fuel_consumed = $2, updated_at = now()
-        WHERE id = $3
+        SET actual_distance = $1, fuel_consumed = $2, revenue = $3, updated_at = now()
+        WHERE id = $4
     `;
-    await client.query(query, [actualDistance, fuelConsumed, id]);
+    await client.query(query, [actualDistance, fuelConsumed, revenue ?? 0, id]);
 };
 
 export const countActiveTripsForVehicle = async (vehicleId, client = null) => {
@@ -191,4 +191,53 @@ export const tripsPerMonth = async (monthsBack = 6) => {
     `;
     const { rows } = await db.query(query, [monthsBack]);
     return rows;
+};
+
+export const revenueByMonth = async (monthsBack = 6) => {
+    const query = `
+        SELECT
+            EXTRACT(MONTH FROM completed_at)::int as month,
+            COALESCE(SUM(revenue), 0) as revenue
+        FROM trips
+        WHERE status = 'Completed'
+          AND completed_at >= date_trunc('month', CURRENT_DATE - interval '1 month' * $1)
+        GROUP BY EXTRACT(MONTH FROM completed_at)
+        ORDER BY month ASC
+    `;
+    const { rows } = await db.query(query, [monthsBack]);
+    return rows;
+};
+
+export const analyticsPerVehicle = async () => {
+    const query = `
+        SELECT
+            v.id as "vehicleId",
+            v.vehicle_name as "vehicleName",
+            v.registration_number as "registrationNumber",
+            v.purchase_cost as "purchaseCost",
+            COALESCE(SUM(t.revenue), 0) as "totalRevenue",
+            COALESCE(SUM(t.fuel_consumed), 0) as "totalFuelLiters",
+            COALESCE((SELECT SUM(f.cost) FROM fuel_logs f WHERE f.vehicle_id = v.id), 0) as "totalFuelCost",
+            COALESCE((SELECT SUM(m.cost) FROM maintenance_logs m WHERE m.vehicle_id = v.id), 0) as "totalMaintenanceCost"
+        FROM vehicles v
+        LEFT JOIN trips t ON t.vehicle_id = v.id AND t.status = 'Completed'
+        WHERE v.status != 'Retired'
+        GROUP BY v.id, v.vehicle_name, v.registration_number, v.purchase_cost
+        ORDER BY "totalRevenue" DESC
+    `;
+    const { rows } = await db.query(query);
+    return rows;
+};
+
+export const fleetEfficiency = async () => {
+    const query = `
+        SELECT
+            COALESCE(SUM(actual_distance), 0) as "totalDistance",
+            COALESCE(SUM(fuel_consumed), 0) as "totalFuel",
+            COALESCE(SUM(revenue), 0) as "totalRevenue"
+        FROM trips
+        WHERE status = 'Completed'
+    `;
+    const { rows } = await db.query(query);
+    return rows[0];
 };

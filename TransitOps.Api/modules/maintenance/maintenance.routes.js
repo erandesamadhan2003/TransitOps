@@ -8,8 +8,9 @@ import { ROLES } from '../../utils/constants.js';
 
 const router = Router();
 
-router.get('/', authenticate, listMaintenanceRules, handleValidation, maintenanceController.list);
-router.get('/:id', authenticate, maintenanceController.getOne);
+// Fleet access: Admin, Fleet Manager, Dispatcher, Financial Analyst
+router.get('/', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.DISPATCHER, ROLES.FINANCIAL_ANALYST), listMaintenanceRules, handleValidation, maintenanceController.list);
+router.get('/:id', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.DISPATCHER, ROLES.FINANCIAL_ANALYST), maintenanceController.getOne);
 
 // Fleet Manager endpoints
 router.post('/', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), createMaintenanceRules, handleValidation, maintenanceController.create);

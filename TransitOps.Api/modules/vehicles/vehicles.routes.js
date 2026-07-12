@@ -10,8 +10,9 @@ import { ROLES } from '../../utils/constants.js';
 const router = Router();
 const upload = makeUploader('vehicles');
 
-router.get('/', authenticate, listVehiclesRules, handleValidation, vehiclesController.list);
-router.get('/:id', authenticate, vehiclesController.getOne);
+// Fleet access: Admin, Fleet Manager, Dispatcher, Financial Analyst
+router.get('/', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.DISPATCHER, ROLES.FINANCIAL_ANALYST), listVehiclesRules, handleValidation, vehiclesController.list);
+router.get('/:id', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.DISPATCHER, ROLES.FINANCIAL_ANALYST), vehiclesController.getOne);
 
 router.post('/', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), createVehicleRules, handleValidation, vehiclesController.create);
 router.put('/:id', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), updateVehicleRules, handleValidation, vehiclesController.update);

@@ -8,8 +8,9 @@ import { ROLES } from '../../utils/constants.js';
 
 const router = Router();
 
-router.get('/', authenticate, listExpensesRules, handleValidation, expensesController.list);
-router.get('/:id', authenticate, expensesController.getOne);
+// Financial Analyst + Fleet Manager + Admin can read expenses
+router.get('/', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.FINANCIAL_ANALYST), listExpensesRules, handleValidation, expensesController.list);
+router.get('/:id', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.FINANCIAL_ANALYST), expensesController.getOne);
 
 router.post('/', authenticate, requireRole(ROLES.ADMIN, ROLES.DISPATCHER, ROLES.FLEET_MANAGER), createExpenseRules, handleValidation, expensesController.create);
 router.delete('/:id', authenticate, requireRole(ROLES.ADMIN), expensesController.remove);

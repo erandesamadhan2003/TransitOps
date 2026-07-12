@@ -13,4 +13,5 @@ export const tripSchema = z.object({
 export const completeTripSchema = z.object({
   actualDistance: positiveNumber("Actual distance"),
   fuelConsumed: positiveNumber("Fuel consumed"),
+  revenue: z.coerce.number().min(0, "Revenue must be non-negative").optional().default(0),
 });

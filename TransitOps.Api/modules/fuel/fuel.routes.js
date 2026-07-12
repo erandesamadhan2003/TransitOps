@@ -8,8 +8,9 @@ import { ROLES } from '../../utils/constants.js';
 
 const router = Router();
 
-router.get('/', authenticate, listFuelLogsRules, handleValidation, fuelController.list);
-router.get('/:id', authenticate, fuelController.getOne);
+// Financial Analyst + Fleet Manager + Admin can read fuel logs
+router.get('/', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.FINANCIAL_ANALYST), listFuelLogsRules, handleValidation, fuelController.list);
+router.get('/:id', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.FINANCIAL_ANALYST), fuelController.getOne);
 
 router.post('/', authenticate, requireRole(ROLES.ADMIN, ROLES.DISPATCHER, ROLES.FLEET_MANAGER), createFuelLogRules, handleValidation, fuelController.create);
 router.delete('/:id', authenticate, requireRole(ROLES.ADMIN), fuelController.remove);

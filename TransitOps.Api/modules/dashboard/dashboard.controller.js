@@ -20,3 +20,11 @@ export const charts = async (req, res, next) => {
         next(err);
     }
 };
+export const analytics = async (req, res, next) => {
+    try {
+        const result = await dashboardService.getAnalytics();
+        return success(res, { message: 'Analytics retrieved successfully', data: result });
+    } catch (err) {
+        next(err);
+    }
+};

@@ -17,3 +17,11 @@ export function useKpisData() {
     staleTime: STALE_TIME.SHORT,
   });
 }
+
+export function useAnalyticsData() {
+  return useQuery({
+    queryKey: ["dashboard-analytics"],
+    queryFn: reportsApi.getAnalytics,
+    staleTime: STALE_TIME.DEFAULT,
+  });
+}

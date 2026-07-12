@@ -9,36 +9,9 @@ import { permissionService } from "@/services/permission.service";
 import { ROLES, ROLE_LABELS } from "@/constants/app";
 import { authService } from "@/services/auth.service";
 
-const RBAC_MATRIX = {
-  [ROLES.FLEET_MANAGER]: {
-    fleet: "edit",
-    drivers: "edit",
-    trips: "none",
-    fuelExpenses: "none",
-    analytics: "edit",
-  },
-  [ROLES.DISPATCHER]: {
-    fleet: "view",
-    drivers: "none",
-    trips: "edit",
-    fuelExpenses: "none",
-    analytics: "none",
-  },
-  [ROLES.SAFETY_OFFICER]: {
-    fleet: "none",
-    drivers: "edit",
-    trips: "view",
-    fuelExpenses: "none",
-    analytics: "none",
-  },
-  [ROLES.FINANCIAL_ANALYST]: {
-    fleet: "view",
-    drivers: "none",
-    trips: "none",
-    fuelExpenses: "edit",
-    analytics: "edit",
-  },
-};
+
+// Single source of truth lives in permission.service.js
+const RBAC_MATRIX = permissionService.matrix();
 
 const MODULES = ["fleet", "drivers", "trips", "fuelExpenses", "analytics"];
 const MODULE_LABELS = {

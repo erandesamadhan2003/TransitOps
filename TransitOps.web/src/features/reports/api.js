@@ -7,4 +7,7 @@ export const reportsApi = {
 
   getKpis: () =>
     api.get(ENDPOINTS.DASHBOARD.KPIS).then((r) => r.data.data || r.data),
+
+  getAnalytics: () =>
+    api.get(ENDPOINTS.DASHBOARD.ANALYTICS).then((r) => r.data.data || r.data),
 };

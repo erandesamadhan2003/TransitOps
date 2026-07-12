@@ -21,5 +21,6 @@ export const createTripRules = [
 
 export const completeTripRules = [
     body('actualDistance').isFloat({ min: 0 }).withMessage('actualDistance must be a positive number'),
-    body('fuelConsumed').isFloat({ min: 0 }).withMessage('fuelConsumed must be a positive number')
+    body('fuelConsumed').isFloat({ min: 0 }).withMessage('fuelConsumed must be a positive number'),
+    body('revenue').optional().isFloat({ min: 0 }).withMessage('revenue must be a non-negative number')
 ];

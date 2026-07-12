@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Route } from "lucide-react";
 import { Card, StatusBadge } from "@/components/ui";
-import { Button, Table, ConfirmDialog } from "@/components/common";
+import { Button, Table, ConfirmDialog, Modal, Input } from "@/components/common";
 import { Select } from "@/components/forms";
 import {
   useTrips,
@@ -12,6 +14,64 @@ import {
 import { TripFormModal } from "../components/TripFormModal";
 import { permissionService } from "@/services/permission.service";
 import { TRIP_STATUS, TRIP_STATUS_LABELS } from "@/constants/app";
+import { completeTripSchema } from "../schemas";
+
+function CompleteTripModal({ trip, onClose, onSubmit, loading }) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(completeTripSchema),
+    defaultValues: { actualDistance: "", fuelConsumed: "", revenue: "" },
+  });
+
+  return (
+    <Modal
+      open={Boolean(trip)}
+      onClose={onClose}
+      title={`Complete Trip`}
+      description="Enter the final details to mark this trip as completed."
+      footer={
+        <>
+          <Button variant="secondary" onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button onClick={handleSubmit(onSubmit)} loading={loading}>
+            Confirm Complete
+          </Button>
+        </>
+      }
+    >
+      <form className="grid grid-cols-1 gap-4 sm:grid-cols-2" noValidate>
+        <Input
+          label="Actual Distance (km)"
+          type="number"
+          required
+          placeholder="480"
+          error={errors.actualDistance?.message}
+          {...register("actualDistance")}
+        />
+        <Input
+          label="Fuel Consumed (L)"
+          type="number"
+          required
+          placeholder="45"
+          error={errors.fuelConsumed?.message}
+          {...register("fuelConsumed")}
+        />
+        <Input
+          label="Revenue Earned (₹)"
+          type="number"
+          placeholder="0"
+          containerClassName="sm:col-span-2"
+          error={errors.revenue?.message}
+          {...register("revenue")}
+        />
+      </form>
+    </Modal>
+  );
+}
 
 export default function TripsPage() {
   const canEdit = permissionService.can("trips", "edit");
@@ -24,24 +84,26 @@ export default function TripsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(null);
   const [confirmDispatch, setConfirmDispatch] = useState(null);
+  const [completeTrip, setCompleteTrip] = useState(null);
 
   const columns = useMemo(
     () => [
-      {
-        header: "Code",
-        accessorKey: "code",
-        cell: (info) => (
-          <span className="font-mono text-xs font-semibold">
-            {info.getValue()}
-          </span>
-        ),
-      },
       { header: "Source", accessorKey: "source" },
       { header: "Destination", accessorKey: "destination" },
+      { header: "Vehicle", accessorKey: "vehicleName", cell: (info) => info.getValue() ?? "—" },
+      { header: "Driver", accessorKey: "driverName", cell: (info) => info.getValue() ?? "—" },
       {
         header: "Cargo (kg)",
         accessorKey: "cargoWeight",
         cell: (info) => info.getValue() ?? "—",
+      },
+      {
+        header: "Revenue (₹)",
+        accessorKey: "revenue",
+        cell: (info) => {
+          const v = info.getValue();
+          return v != null ? `₹${Number(v).toLocaleString()}` : "—";
+        },
       },
       {
         header: "Status",
@@ -75,7 +137,7 @@ export default function TripsPage() {
                         variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          complete.mutate({ id: trip.id, payload: {} });
+                          setCompleteTrip(trip);
                         }}
                       >
                         Complete
@@ -102,7 +164,7 @@ export default function TripsPage() {
           ]
         : []),
     ],
-    [canEdit, complete],
+    [canEdit],
   );
 
   return (
@@ -170,6 +232,25 @@ export default function TripsPage() {
         <TripFormModal open={createOpen} onClose={() => setCreateOpen(false)} />
       )}
 
+      <CompleteTripModal
+        trip={completeTrip}
+        onClose={() => setCompleteTrip(null)}
+        loading={complete.isPending}
+        onSubmit={(values) => {
+          complete.mutate(
+            {
+              id: completeTrip.id,
+              payload: {
+                actualDistance: Number(values.actualDistance),
+                fuelConsumed: Number(values.fuelConsumed),
+                revenue: Number(values.revenue ?? 0),
+              },
+            },
+            { onSuccess: () => setCompleteTrip(null) },
+          );
+        }}
+      />
+
       <ConfirmDialog
         open={Boolean(confirmDispatch)}
         onClose={() => setConfirmDispatch(null)}
@@ -178,7 +259,7 @@ export default function TripsPage() {
             onSuccess: () => setConfirmDispatch(null),
           })
         }
-        title={`Dispatch ${confirmDispatch?.code}?`}
+        title={`Dispatch this trip?`}
         description="This will mark the vehicle and driver as On Trip."
         confirmLabel="Dispatch"
         tone="primary"
@@ -192,7 +273,7 @@ export default function TripsPage() {
             onSuccess: () => setConfirmCancel(null),
           })
         }
-        title={`Cancel ${confirmCancel?.code}?`}
+        title={`Cancel this trip?`}
         description="This will release the vehicle and driver back to available status."
         confirmLabel="Cancel Trip"
         loading={cancel.isPending}

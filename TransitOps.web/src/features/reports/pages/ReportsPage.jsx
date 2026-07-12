@@ -1,115 +1,222 @@
-import { Gauge, Fuel, TrendingUp, BarChart3 } from "lucide-react";
+import { Download, Gauge, Fuel, TrendingUp, DollarSign } from "lucide-react";
 import { Card, CardHeader, StatCard } from "@/components/ui";
-import { Loader, ErrorState } from "@/components/common";
-import { useChartsData, useKpisData } from "../hooks";
+import { Button, Loader, ErrorState } from "@/components/common";
+import { useAnalyticsData, useKpisData } from "../hooks";
+import { RevenueBarChart } from "@/components/charts/RevenueBarChart";
+import { CostliestVehiclesBars } from "@/components/charts/CostliestVehiclesBars";
 import { formatCurrency } from "@/utils/format";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
 
-function TripsChart({ data = [] }) {
-  const formatted = data.map((d) => ({
-    month: new Date(d.month).toLocaleString("default", { month: "short" }),
-    Trips: Number(d.count),
-  }));
-  return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={formatted}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip />
-        <Bar dataKey="Trips" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
-  );
+// ── CSV export helper ────────────────────────────────────────────────
+function exportToCsv(analytics, kpis) {
+  const rows = [
+    // Header
+    [
+      "Vehicle",
+      "Registration",
+      "Total Revenue (₹)",
+      "Fuel Cost (₹)",
+      "Maintenance Cost (₹)",
+      "Total Operational Cost (₹)",
+      "ROI (%)",
+    ],
+    // Per-vehicle rows
+    ...(analytics?.vehicles ?? []).map((v) => [
+      v.vehicleName,
+      v.registrationNumber,
+      v.totalRevenue,
+      v.totalFuelCost,
+      v.totalMaintenanceCost,
+      v.totalCost,
+      v.roi ?? "N/A",
+    ]),
+    // Summary row
+    [],
+    ["Fleet Summary"],
+    ["Fleet Utilization (%)", kpis?.fleetUtilizationPercent ?? 0],
+    ["Drivers on Duty", kpis?.driversOnDuty ?? 0],
+    ["Fuel Efficiency (km/L)", analytics?.fuelEfficiencyKmL ?? "N/A"],
+    ["Total Fleet Revenue (₹)", analytics?.totalRevenue ?? 0],
+  ];
+
+  const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `transitops_analytics_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function FuelCostChart({ data = [] }) {
-  const formatted = data.map((d) => ({
-    month: new Date(d.month).toLocaleString("default", { month: "short" }),
-    "Fuel Cost": Number(d.totalCost),
-  }));
-  return (
-    <ResponsiveContainer width="100%" height={220}>
-      <BarChart data={formatted}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-        <XAxis dataKey="month" tick={{ fontSize: 12 }} />
-        <YAxis tick={{ fontSize: 12 }} />
-        <Tooltip formatter={(v) => formatCurrency(v)} />
-        <Bar dataKey="Fuel Cost" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
-  );
+// ── ROI badge colour ─────────────────────────────────────────────────
+function RoiBadge({ value }) {
+  if (value == null) return <span className="text-xs text-text-tertiary">N/A</span>;
+  const color = value >= 0 ? "text-green-600" : "text-red-600";
+  return <span className={`text-xs font-semibold ${color}`}>{value}%</span>;
 }
 
 export default function ReportsPage() {
-  const { data: charts, isLoading, error, refetch } = useChartsData();
+  const { data: analytics, isLoading, error, refetch } = useAnalyticsData();
   const { data: kpis } = useKpisData();
+
+  // Build revenue-by-month data for RevenueBarChart
+  const revenueChartData = (analytics?.revenueByMonth ?? []).map((d) => ({
+    month: d.month,
+    revenue: Number(d.revenue),
+  }));
+
+  // Build costliest vehicles data for CostliestVehiclesBars
+  const costliestData = [...(analytics?.vehicles ?? [])]
+    .sort((a, b) => b.totalCost - a.totalCost)
+    .slice(0, 5)
+    .map((v) => ({ vehicleName: v.vehicleName, cost: Number(v.totalCost) }));
 
   return (
     <div className="animate-fade-up space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold text-text-primary">
             Analytics
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
-            Fleet performance metrics and operational insights.
+            Fleet performance, cost breakdown, and ROI insights.
           </p>
         </div>
+        <Button
+          variant="secondary"
+          icon={<Download size={16} />}
+          onClick={() => exportToCsv(analytics, kpis)}
+          disabled={!analytics}
+        >
+          Export CSV
+        </Button>
       </div>
 
       {isLoading && <Loader fullHeight label="Loading analytics…" />}
       {error && <ErrorState message={error.message} onRetry={refetch} />}
 
-      {kpis && (
+      {/* ── KPI Cards ─────────────────────────────────────────────── */}
+      {(kpis || analytics) && (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <StatCard
             label="Fleet Utilization"
-            value={`${kpis.fleetUtilizationPercent ?? 0}%`}
+            value={`${kpis?.fleetUtilizationPercent ?? 0}%`}
             accent="ink"
             icon={<Gauge size={18} />}
           />
           <StatCard
-            label="Active Vehicles"
-            value={kpis.activeVehicles ?? 0}
+            label="Drivers on Duty"
+            value={kpis?.driversOnDuty ?? 0}
             accent="teal"
-            icon={<BarChart3 size={18} />}
-          />
-          <StatCard
-            label="Active Trips"
-            value={kpis.activeTrips ?? 0}
-            accent="amber"
             icon={<TrendingUp size={18} />}
           />
           <StatCard
-            label="Drivers on Trip"
-            value={kpis.driversOnTrip ?? 0}
-            accent="teal"
+            label="Fuel Efficiency"
+            value={
+              analytics?.fuelEfficiencyKmL != null
+                ? `${analytics.fuelEfficiencyKmL} km/L`
+                : "—"
+            }
+            accent="amber"
             icon={<Fuel size={18} />}
+          />
+          <StatCard
+            label="Total Revenue"
+            value={formatCurrency(analytics?.totalRevenue ?? 0)}
+            accent="teal"
+            icon={<DollarSign size={18} />}
           />
         </div>
       )}
 
-      {charts && (
+      {/* ── Charts Row ────────────────────────────────────────────── */}
+      {analytics && (
         <div className="grid gap-4 lg:grid-cols-2">
           <Card>
-            <CardHeader title="Trips per Month" subtitle="Last 6 months dispatch activity" />
-            <TripsChart data={charts.tripsPerMonth} />
+            <CardHeader
+              title="Monthly Revenue"
+              subtitle="Revenue from completed trips in the last 6 months"
+            />
+            {revenueChartData.length > 0 ? (
+              <div className="mt-4">
+                <RevenueBarChart data={revenueChartData} height={220} />
+              </div>
+            ) : (
+              <p className="mt-6 text-center text-sm text-text-secondary">
+                No completed trips with revenue yet.
+              </p>
+            )}
           </Card>
 
           <Card>
-            <CardHeader title="Fuel Cost per Month" subtitle="Total fuel expenditure trend" />
-            <FuelCostChart data={charts.fuelCostPerMonth} />
+            <CardHeader
+              title="Top 5 Costliest Vehicles"
+              subtitle="Combined fuel + maintenance expenditure"
+            />
+            {costliestData.length > 0 ? (
+              <div className="mt-4">
+                <CostliestVehiclesBars data={costliestData} />
+              </div>
+            ) : (
+              <p className="mt-6 text-center text-sm text-text-secondary">
+                No cost data yet.
+              </p>
+            )}
           </Card>
         </div>
+      )}
+
+      {/* ── Per-Vehicle ROI Table ─────────────────────────────────── */}
+      {analytics?.vehicles?.length > 0 && (
+        <Card>
+          <CardHeader
+            title="Vehicle ROI Breakdown"
+            subtitle="ROI = (Revenue − Operational Cost) ÷ Acquisition Cost"
+          />
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-[11px] uppercase tracking-wide text-text-secondary">
+                  <th className="py-2 pr-4 text-left font-semibold">Vehicle</th>
+                  <th className="py-2 px-3 text-right font-semibold">Revenue</th>
+                  <th className="py-2 px-3 text-right font-semibold">Fuel Cost</th>
+                  <th className="py-2 px-3 text-right font-semibold">Maint. Cost</th>
+                  <th className="py-2 px-3 text-right font-semibold">Total Cost</th>
+                  <th className="py-2 pl-3 text-right font-semibold">ROI</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analytics.vehicles.map((v) => (
+                  <tr
+                    key={v.vehicleId}
+                    className="border-b border-border/60 last:border-0 hover:bg-ink-50/40"
+                  >
+                    <td className="py-2.5 pr-4">
+                      <p className="font-medium text-text-primary">{v.vehicleName}</p>
+                      <p className="text-xs text-text-secondary">{v.registrationNumber}</p>
+                    </td>
+                    <td className="py-2.5 px-3 text-right text-green-700">
+                      {formatCurrency(v.totalRevenue)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right text-amber-700">
+                      {formatCurrency(v.totalFuelCost)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right text-red-700">
+                      {formatCurrency(v.totalMaintenanceCost)}
+                    </td>
+                    <td className="py-2.5 px-3 text-right font-medium text-text-primary">
+                      {formatCurrency(v.totalCost)}
+                    </td>
+                    <td className="py-2.5 pl-3 text-right">
+                      <RoiBadge value={v.roi} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
       )}
     </div>
   );

@@ -71,8 +71,8 @@ export default function DashboardPage() {
               icon={<Clock size={18} />}
             />
             <StatCard
-              label="Drivers Available"
-              value={kpis.driversAvailable}
+              label="Drivers on Duty"
+              value={kpis.driversOnDuty}
               accent="teal"
               icon={<Users size={18} />}
             />

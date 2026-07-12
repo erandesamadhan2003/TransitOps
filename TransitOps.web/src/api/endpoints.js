@@ -8,6 +8,7 @@ export const ENDPOINTS = {
   DASHBOARD: {
     KPIS: "/dashboard/kpis",
     CHARTS: "/dashboard/charts",
+    ANALYTICS: "/dashboard/analytics",
   },
 
   VEHICLES: {

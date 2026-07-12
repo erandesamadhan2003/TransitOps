@@ -8,8 +8,9 @@ import { ROLES } from '../../utils/constants.js';
 
 const router = Router();
 
-router.get('/', authenticate, listTripsRules, handleValidation, tripsController.list);
-router.get('/:id', authenticate, tripsController.getOne);
+// Trips access: Admin, Dispatcher, Safety Officer
+router.get('/', authenticate, requireRole(ROLES.ADMIN, ROLES.DISPATCHER, ROLES.SAFETY_OFFICER), listTripsRules, handleValidation, tripsController.list);
+router.get('/:id', authenticate, requireRole(ROLES.ADMIN, ROLES.DISPATCHER, ROLES.SAFETY_OFFICER), tripsController.getOne);
 
 // Dispatcher endpoints (Spec's 'Driver' persona)
 router.post('/', authenticate, requireRole(ROLES.ADMIN, ROLES.DISPATCHER), createTripRules, handleValidation, tripsController.create);

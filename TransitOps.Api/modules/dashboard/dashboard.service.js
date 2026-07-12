@@ -33,6 +33,9 @@ export const getKPIs = async (filters = {}) => {
         fleetUtilizationPercent = Math.round(fleetUtilizationPercent * 100) / 100; // round to 2 decimals
     }
 
+    // driversOnDuty = Available + On Trip (active workforce)
+    const driversOnDuty = parseInt(driversAvailable, 10) + parseInt(driversOnTrip, 10);
+
     return {
         activeVehicles,
         availableVehicles,
@@ -42,6 +45,7 @@ export const getKPIs = async (filters = {}) => {
         pendingTrips,
         driversAvailable,
         driversOnTrip,
+        driversOnDuty,
         fleetUtilizationPercent
     };
 };
@@ -59,5 +63,41 @@ export const getCharts = async (monthsBack = 6) => {
         fuelCostPerMonth,
         maintenanceCostPerMonth,
         vehicleUtilization
+    };
+};
+
+export const getAnalytics = async () => {
+    const [perVehicle, efficiency, revenueByMonth] = await Promise.all([
+        tripsModel.analyticsPerVehicle(),
+        tripsModel.fleetEfficiency(),
+        tripsModel.revenueByMonth(6)
+    ]);
+
+    // Enrich each vehicle row with computed metrics
+    const vehicles = perVehicle.map(v => {
+        const totalCost = parseFloat(v.totalFuelCost) + parseFloat(v.totalMaintenanceCost);
+        const totalRevenue = parseFloat(v.totalRevenue);
+        const purchaseCost = parseFloat(v.purchaseCost) || 0;
+        const roi = purchaseCost > 0
+            ? Math.round(((totalRevenue - totalCost) / purchaseCost) * 10000) / 100
+            : null;
+        return {
+            ...v,
+            totalCost: Math.round(totalCost * 100) / 100,
+            roi
+        };
+    });
+
+    const totalDistance = parseFloat(efficiency.totalDistance) || 0;
+    const totalFuel = parseFloat(efficiency.totalFuel) || 0;
+    const fuelEfficiencyKmL = totalFuel > 0
+        ? Math.round((totalDistance / totalFuel) * 100) / 100
+        : null;
+
+    return {
+        vehicles,
+        revenueByMonth,
+        fuelEfficiencyKmL,
+        totalRevenue: parseFloat(efficiency.totalRevenue) || 0
     };
 };
