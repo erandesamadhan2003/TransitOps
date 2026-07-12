@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Plus, Fuel, Receipt } from "lucide-react";
 import { Card, CardHeader, StatCard } from "@/components/ui";
-import { Button, Loader } from "@/components/common";
+import { Button, Loader, Pagination } from "@/components/common";
 import {
   useFuelLogs,
   useExpenses,
@@ -131,8 +131,10 @@ export default function ExpensesPage() {
   const canEdit = permissionService.can("fuelExpenses", "edit");
   const [fuelOpen, setFuelOpen] = useState(false);
   const [expenseOpen, setExpenseOpen] = useState(false);
-  const { data: fuelLogs = [], isLoading: fuelLoading } = useFuelLogs();
-  const { data: expenses = [] } = useExpenses();
+  const [fuelPage, setFuelPage] = useState(1);
+  const [expensePage, setExpensePage] = useState(1);
+  const { data: fuelLogs = [], isLoading: fuelLoading } = useFuelLogs({ page: fuelPage, pageSize: 10 });
+  const { data: expenses = [] } = useExpenses({ page: expensePage, pageSize: 10 });
   const { data: vehicles = [] } = useVehicles();
 
   const resolvedFuelLogs = Array.isArray(fuelLogs) ? fuelLogs : (fuelLogs?.logs || fuelLogs?.data || []);
@@ -205,6 +207,11 @@ export default function ExpensesPage() {
               </table>
             </div>
           )}
+          <Pagination 
+            page={fuelPage} 
+            totalPages={fuelLogs?.pagination?.totalPages || 0} 
+            onPageChange={setFuelPage} 
+          />
         </Card>
 
         <Card>
@@ -236,6 +243,11 @@ export default function ExpensesPage() {
               </tbody>
             </table>
           </div>
+          <Pagination 
+            page={expensePage} 
+            totalPages={expenses?.pagination?.totalPages || 0} 
+            onPageChange={setExpensePage} 
+          />
         </Card>
       </div>
 

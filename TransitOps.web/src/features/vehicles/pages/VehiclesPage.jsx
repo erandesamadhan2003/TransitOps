@@ -11,14 +11,15 @@ import { permissionService } from "@/services/permission.service";
 
 export default function VehiclesPage() {
   const canEdit = permissionService.can("fleet", "edit");
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({});
   const debouncedSearch = useDebounce(filters.search, 350);
   const {
-    data: vehicles = [],
+    data,
     isLoading,
     error,
     refetch,
-  } = useVehicles({ ...filters, search: debouncedSearch });
+  } = useVehicles({ ...filters, search: debouncedSearch, page, pageSize: 10 });
   const deleteVehicle = useDeleteVehicle();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -116,7 +117,7 @@ export default function VehiclesPage() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <VehicleFilters filters={filters} onChange={setFilters} />
+          <VehicleFilters filters={filters} onChange={(f) => { setFilters(f); setPage(1); }} />
           {canEdit && (
             <Button icon={<Plus size={16} />} onClick={openCreate}>
               Add Vehicle
@@ -128,10 +129,16 @@ export default function VehiclesPage() {
       <Card>
         <Table
           columns={columns}
-          data={vehicles}
+          data={data?.vehicles || []}
           isLoading={isLoading}
           error={error}
           onRetry={refetch}
+          pagination={{
+            page,
+            pageSize: 10,
+            totalElements: data?.pagination?.total || 0,
+            onPageChange: setPage,
+          }}
           emptyTitle="No vehicles yet"
           emptyDescription="Add your first vehicle to start building the registry."
           emptyAction={

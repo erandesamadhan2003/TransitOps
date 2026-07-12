@@ -75,8 +75,9 @@ function CompleteTripModal({ trip, onClose, onSubmit, loading }) {
 
 export default function TripsPage() {
   const canEdit = permissionService.can("trips", "edit");
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({});
-  const { data: trips = [], isLoading, error, refetch } = useTrips(filters);
+  const { data, isLoading, error, refetch } = useTrips({ ...filters, page, pageSize: 10 });
   const dispatch = useDispatchTrip();
   const cancel = useCancelTrip();
   const complete = useCompleteTrip();
@@ -182,9 +183,10 @@ export default function TripsPage() {
           <Select
             placeholder="Status: All"
             value={filters.status ?? ""}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, status: e.target.value || undefined }))
-            }
+            onChange={(e) => {
+              setFilters((f) => ({ ...f, status: e.target.value || undefined }));
+              setPage(1);
+            }}
             options={Object.entries(TRIP_STATUS_LABELS).map(
               ([value, label]) => ({ value, label }),
             )}
@@ -204,10 +206,16 @@ export default function TripsPage() {
       <Card>
         <Table
           columns={columns}
-          data={trips}
+          data={data?.trips || []}
           isLoading={isLoading}
           error={error}
           onRetry={refetch}
+          pagination={{
+            page,
+            pageSize: 10,
+            totalElements: data?.pagination?.total || 0,
+            onPageChange: setPage,
+          }}
           emptyTitle="No trips yet"
           emptyDescription="Create a trip to get started with dispatching."
           emptyAction={

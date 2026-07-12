@@ -167,7 +167,7 @@ export default function UsersPage() {
             pagination={{
               page,
               pageSize: 10,
-              totalElements: data?.total || 0,
+              totalElements: data?.pagination?.total || 0,
               onPageChange: setPage,
             }}
           />

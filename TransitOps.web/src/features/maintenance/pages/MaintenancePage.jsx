@@ -11,7 +11,8 @@ import { cn } from "@/utils/cn";
 
 export default function MaintenancePage() {
   const canEdit = permissionService.can("fleet", "edit");
-  const { data: records = [], isLoading, error, refetch } = useMaintenance();
+  const [page, setPage] = useState(1);
+  const { data, isLoading, error, refetch } = useMaintenance({ page, pageSize: 10 });
   const close = useCloseMaintenance();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -104,10 +105,16 @@ export default function MaintenancePage() {
       <Card>
         <Table
           columns={columns}
-          data={records}
+          data={data?.records || []}
           isLoading={isLoading}
           error={error}
           onRetry={refetch}
+          pagination={{
+            page,
+            pageSize: 10,
+            totalElements: data?.pagination?.total || 0,
+            onPageChange: setPage,
+          }}
           emptyTitle="No maintenance records"
           emptyDescription="Log your first maintenance record to track vehicle health."
           emptyAction={

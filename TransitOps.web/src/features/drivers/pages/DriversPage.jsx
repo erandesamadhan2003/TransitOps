@@ -27,14 +27,15 @@ import { DRIVER_STATUS, DRIVER_STATUS_LABELS } from "@/constants/app";
 
 export default function DriversPage() {
   const canEdit = permissionService.can("drivers", "edit");
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({});
   const debouncedSearch = useDebounce(filters.search, 350);
   const {
-    data: drivers = [],
+    data,
     isLoading,
     error,
     refetch,
-  } = useDrivers({ ...filters, search: debouncedSearch });
+  } = useDrivers({ ...filters, search: debouncedSearch, page, pageSize: 10 });
   const suspendDriver = useSuspendDriver();
   const reinstateDriver = useReinstateDriver();
   const setOffDutyhook = useSetOffDuty();
@@ -247,9 +248,10 @@ export default function DriversPage() {
           <Select
             placeholder="Status: All"
             value={filters.status ?? ""}
-            onChange={(e) =>
-              setFilters((f) => ({ ...f, status: e.target.value || undefined }))
-            }
+            onChange={(e) => {
+              setFilters((f) => ({ ...f, status: e.target.value || undefined }));
+              setPage(1);
+            }}
             options={Object.entries(DRIVER_STATUS_LABELS).map(
               ([value, label]) => ({ value, label }),
             )}
@@ -264,12 +266,13 @@ export default function DriversPage() {
               type="search"
               placeholder="Search name / license…"
               value={filters.search ?? ""}
-              onChange={(e) =>
+              onChange={(e) => {
                 setFilters((f) => ({
                   ...f,
                   search: e.target.value || undefined,
-                }))
-              }
+                }));
+                setPage(1);
+              }}
               className="h-10 w-full rounded-lg border border-border-strong bg-white pl-9 pr-3 text-sm focus:border-ink-500 focus:outline-none"
             />
           </div>
@@ -284,10 +287,16 @@ export default function DriversPage() {
       <Card>
         <Table
           columns={columns}
-          data={drivers}
+          data={data?.drivers || []}
           isLoading={isLoading}
           error={error}
           onRetry={refetch}
+          pagination={{
+            page,
+            pageSize: 10,
+            totalElements: data?.pagination?.total || 0,
+            onPageChange: setPage,
+          }}
           emptyTitle="No drivers yet"
           emptyDescription="Add your first driver to get started."
           emptyAction={
