@@ -18,10 +18,10 @@ export function useKpisData() {
   });
 }
 
-export function useAnalyticsData() {
+export function useAnalyticsData(params = {}) {
   return useQuery({
-    queryKey: ["dashboard-analytics"],
-    queryFn: reportsApi.getAnalytics,
+    queryKey: ["dashboard-analytics", params],
+    queryFn: () => reportsApi.getAnalytics(params),
     staleTime: STALE_TIME.DEFAULT,
   });
 }

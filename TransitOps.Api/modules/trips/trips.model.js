@@ -232,8 +232,8 @@ export const revenueByMonth = async (monthsBack = 6) => {
     return rows;
 };
 
-export const analyticsPerVehicle = async () => {
-    const query = `
+export const analyticsPerVehicle = async (limit = null, offset = null) => {
+    let query = `
         SELECT
             v.id as "vehicleId",
             v.vehicle_name as "vehicleName",
@@ -242,14 +242,24 @@ export const analyticsPerVehicle = async () => {
             COALESCE(SUM(t.revenue), 0) as "totalRevenue",
             COALESCE(SUM(t.fuel_consumed), 0) as "totalFuelLiters",
             COALESCE((SELECT SUM(f.cost) FROM fuel_logs f WHERE f.vehicle_id = v.id), 0) as "totalFuelCost",
-            COALESCE((SELECT SUM(m.cost) FROM maintenance_logs m WHERE m.vehicle_id = v.id), 0) as "totalMaintenanceCost"
+            COALESCE((SELECT SUM(m.cost) FROM maintenance_logs m WHERE m.vehicle_id = v.id), 0) as "totalMaintenanceCost",
+            COUNT(*) OVER() as "full_count"
         FROM vehicles v
         LEFT JOIN trips t ON t.vehicle_id = v.id AND t.status = 'Completed'
         WHERE v.status != 'Retired'
         GROUP BY v.id, v.vehicle_name, v.registration_number, v.purchase_cost
         ORDER BY "totalRevenue" DESC
     `;
-    const { rows } = await db.query(query);
+    const params = [];
+    if (limit !== null) {
+        query += ` LIMIT $1`;
+        params.push(limit);
+        if (offset !== null) {
+            query += ` OFFSET $2`;
+            params.push(offset);
+        }
+    }
+    const { rows } = await db.query(query, params);
     return rows;
 };
 
@@ -264,4 +274,21 @@ export const fleetEfficiency = async () => {
     `;
     const { rows } = await db.query(query);
     return rows[0];
+};
+
+export const topCostliestVehicles = async (limit = 5) => {
+    const query = `
+        SELECT
+            v.vehicle_name as "vehicleName",
+            (
+                COALESCE((SELECT SUM(f.cost) FROM fuel_logs f WHERE f.vehicle_id = v.id), 0) +
+                COALESCE((SELECT SUM(m.cost) FROM maintenance_logs m WHERE m.vehicle_id = v.id), 0)
+            ) as "totalCost"
+        FROM vehicles v
+        WHERE v.status != 'Retired'
+        ORDER BY "totalCost" DESC
+        LIMIT $1
+    `;
+    const { rows } = await db.query(query, [limit]);
+    return rows;
 };

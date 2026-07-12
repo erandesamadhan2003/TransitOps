@@ -66,15 +66,29 @@ export const getCharts = async (monthsBack = 6) => {
     };
 };
 
-export const getAnalytics = async () => {
-    const [perVehicle, efficiency, revenueByMonth] = await Promise.all([
-        tripsModel.analyticsPerVehicle(),
+export const getAnalytics = async (page = null, pageSize = null) => {
+    let limit = null;
+    let offset = null;
+    
+    if (page && pageSize) {
+        limit = Math.min(Math.max(parseInt(pageSize, 10) || 10, 1), 100);
+        offset = (Math.max(parseInt(page, 10) || 1, 1) - 1) * limit;
+    }
+
+    const [perVehicle, efficiency, revenueByMonth, topCostliestVehicles] = await Promise.all([
+        tripsModel.analyticsPerVehicle(limit, offset),
         tripsModel.fleetEfficiency(),
-        tripsModel.revenueByMonth(6)
+        tripsModel.revenueByMonth(6),
+        tripsModel.topCostliestVehicles(5)
     ]);
 
+    let total = 0;
+    
     // Enrich each vehicle row with computed metrics
     const vehicles = perVehicle.map(v => {
+        total = parseInt(v.full_count || 0, 10);
+        delete v.full_count;
+        
         const totalCost = parseFloat(v.totalFuelCost) + parseFloat(v.totalMaintenanceCost);
         const totalRevenue = parseFloat(v.totalRevenue);
         const purchaseCost = parseFloat(v.purchaseCost) || 0;
@@ -98,6 +112,16 @@ export const getAnalytics = async () => {
         vehicles,
         revenueByMonth,
         fuelEfficiencyKmL,
-        totalRevenue: parseFloat(efficiency.totalRevenue) || 0
+        totalRevenue: parseFloat(efficiency.totalRevenue) || 0,
+        topCostliestVehicles: topCostliestVehicles.map(v => ({
+            vehicleName: v.vehicleName,
+            cost: parseFloat(v.totalCost)
+        })),
+        pagination: (limit && offset !== null) ? {
+            page: Math.max(parseInt(page, 10) || 1, 1),
+            pageSize: limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+        } : undefined
     };
 };

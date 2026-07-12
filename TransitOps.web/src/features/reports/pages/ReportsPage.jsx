@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Download, Gauge, Fuel, TrendingUp, DollarSign } from "lucide-react";
 import { Card, CardHeader, StatCard } from "@/components/ui";
-import { Button, Loader, ErrorState } from "@/components/common";
+import { Button, Loader, ErrorState, Pagination } from "@/components/common";
 import { useAnalyticsData, useKpisData } from "../hooks";
+import { reportsApi } from "../api";
 import { RevenueBarChart } from "@/components/charts/RevenueBarChart";
 import { CostliestVehiclesBars } from "@/components/charts/CostliestVehiclesBars";
 import { formatCurrency } from "@/utils/format";
@@ -56,7 +58,8 @@ function RoiBadge({ value }) {
 }
 
 export default function ReportsPage() {
-  const { data: analytics, isLoading, error, refetch } = useAnalyticsData();
+  const [page, setPage] = useState(1);
+  const { data: analytics, isLoading, error, refetch } = useAnalyticsData({ page, pageSize: 10 });
   const { data: kpis } = useKpisData();
 
   // Build revenue-by-month data for RevenueBarChart
@@ -66,10 +69,7 @@ export default function ReportsPage() {
   }));
 
   // Build costliest vehicles data for CostliestVehiclesBars
-  const costliestData = [...(analytics?.vehicles ?? [])]
-    .sort((a, b) => b.totalCost - a.totalCost)
-    .slice(0, 5)
-    .map((v) => ({ vehicleName: v.vehicleName, cost: Number(v.totalCost) }));
+  const costliestData = analytics?.topCostliestVehicles ?? [];
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -86,7 +86,15 @@ export default function ReportsPage() {
         <Button
           variant="secondary"
           icon={<Download size={16} />}
-          onClick={() => exportToCsv(analytics, kpis)}
+          onClick={async () => {
+            try {
+              const fullAnalytics = await reportsApi.getAnalytics();
+              exportToCsv(fullAnalytics, kpis);
+            } catch (err) {
+              console.error("Failed to fetch full analytics for export", err);
+              exportToCsv(analytics, kpis);
+            }
+          }}
           disabled={!analytics}
         >
           Export CSV
@@ -216,6 +224,11 @@ export default function ReportsPage() {
               </tbody>
             </table>
           </div>
+          <Pagination 
+            page={page} 
+            totalPages={analytics?.pagination?.totalPages || 0} 
+            onPageChange={setPage} 
+          />
         </Card>
       )}
     </div>

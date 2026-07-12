@@ -23,9 +23,14 @@ export const charts = async (req, res, next) => {
 };
 export const analytics = async (req, res, next) => {
     try {
-        const result = await dashboardService.getAnalytics();
+        const isCsv = req.query.format === 'csv';
+        // For CSV, fetch everything (no pagination)
+        const page = isCsv ? null : req.query.page;
+        const pageSize = isCsv ? null : req.query.pageSize;
+
+        const result = await dashboardService.getAnalytics(page, pageSize);
         
-        if (req.query.format === 'csv') {
+        if (isCsv) {
             const csv = generateCsv(result.vehicles);
             res.setHeader('Content-Type', 'text/csv');
             res.setHeader('Content-Disposition', 'attachment; filename="analytics_summary.csv"');
