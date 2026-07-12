@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+coverage/
+dist/
+build/
+
+uploads/
+
+logs/
+*.log
+npm-debug.log*
+bun-debug.log*
+
+.DS_Store
