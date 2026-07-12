@@ -14,6 +14,7 @@ import {
 import { Sidebar } from "./Sidebar";
 import { Navbar, DesktopThemeToggle } from "./Navbar";
 import { ROUTES } from "@/constants/routes";
+import { cn } from "@/utils/cn";
 import { authService } from "@/services/auth.service";
 import { permissionService } from "@/services/permission.service";
 import { useTheme } from "@/hooks";
@@ -83,6 +84,7 @@ export function AppLayout() {
   const user = authService.getUser();
   const { isDark, toggle: toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const nav = useMemo(
     () =>
@@ -101,13 +103,15 @@ export function AppLayout() {
   }
 
   return (
-    <div className="relative z-[1] min-h-screen md:pl-20">
+    <div className={cn("relative z-[1] min-h-screen transition-all duration-300", expanded ? "md:pl-[260px]" : "md:pl-20")}>
       <Sidebar
         nav={nav}
         user={user}
         onLogout={handleLogout}
         mobileOpen={mobileOpen}
         onMobileClose={() => setMobileOpen(false)}
+        expanded={expanded}
+        onToggleExpand={() => setExpanded(e => !e)}
       />
       <DesktopThemeToggle isDark={isDark} onToggle={toggleTheme} />
       <div className="mx-auto max-w-[1600px] px-4 md:px-8">

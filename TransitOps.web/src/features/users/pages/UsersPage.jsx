@@ -25,58 +25,68 @@ export default function UsersPage() {
     {
       header: "User",
       accessorKey: "fullName",
-      cell: (row) => (
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
         <div className="flex items-center gap-3">
           <div className="brand-gradient flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold text-white">
-            {row.fullName.charAt(0)}
+            {user.fullName.charAt(0)}
           </div>
           <div className="flex flex-col">
-            <span className="font-medium text-text-primary">{row.fullName}</span>
+            <span className="font-medium text-text-primary">{user.fullName}</span>
             <span className="flex items-center gap-1 text-[11px] text-text-secondary">
               <Mail size={10} />
-              {row.email}
+              {user.email}
             </span>
           </div>
         </div>
-      ),
+      )},
     },
     {
       header: "Role",
       accessorKey: "roleName",
-      cell: (row) => (
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
         <div className="flex items-center gap-1.5 text-sm text-text-secondary">
           <Shield size={14} className="text-ink-500" />
-          {ROLE_LABELS[row.roleName] || row.roleName}
+          {ROLE_LABELS[user.roleName] || user.roleName}
         </div>
-      ),
+      )},
     },
     {
       header: "Status",
       accessorKey: "isActive",
-      cell: (row) => (
-        <Badge variant={row.isActive ? "success" : "error"}>
-          {row.isActive ? "Active" : "Deactivated"}
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+        <Badge variant={user.isActive ? "success" : "error"}>
+          {user.isActive ? "Active" : "Deactivated"}
         </Badge>
-      ),
+      )},
     },
     {
       header: "Last Login",
       accessorKey: "lastLogin",
-      cell: (row) => (
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
         <span className="text-sm text-text-secondary">
-          {row.lastLogin ? new Date(row.lastLogin).toLocaleDateString() : "Never"}
+          {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : "Never"}
         </span>
-      ),
+      )},
     },
     {
       id: "actions",
-      cell: (row) => (
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
         <div className="flex justify-end">
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              setSelectedUser(row);
+              setSelectedUser(user);
               setIsFormOpen(true);
             }}
             icon={<UserCog size={14} />}
@@ -84,7 +94,7 @@ export default function UsersPage() {
             Manage
           </Button>
         </div>
-      ),
+      )},
     },
   ];
 

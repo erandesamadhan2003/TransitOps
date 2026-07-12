@@ -28,7 +28,8 @@ export function MaintenanceFormModal({ open, onClose }) {
   const create = useCreateMaintenance();
   // Only show Active (Available + On Trip) vehicles — exclude Retired
   const { data: allVehicles = [] } = useVehicles();
-  const vehicles = allVehicles.filter(
+  const resolvedAllVehicles = Array.isArray(allVehicles) ? allVehicles : (allVehicles?.vehicles || allVehicles?.data || []);
+  const vehicles = resolvedAllVehicles.filter(
     (v) => v.status !== "Retired"
   );
 

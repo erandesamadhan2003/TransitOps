@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
-import { LogOut, Truck, X } from "lucide-react";
+import { LogOut, Truck, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { getInitials } from "@/utils/format";
 import { cn } from "@/utils/cn";
 
@@ -11,8 +11,9 @@ export function Sidebar({
   onLogout,
   mobileOpen = false,
   onMobileClose,
+  expanded = true,
+  onToggleExpand,
 }) {
-  const [expanded, setExpanded] = useState(false);
 
   const navLinks = (
     <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto scroll-none">
@@ -102,31 +103,39 @@ export function Sidebar({
 
   return (
     <>
-      {/* Desktop sidebar — hover expand */}
+      {/* Desktop sidebar — explicit toggle */}
       <aside
         className={cn(
           "hidden md:flex flex-col fixed inset-y-0 left-0 z-40 glass-sidebar transition-all duration-300 shrink-0 overflow-hidden",
           "ease-[cubic-bezier(0.4,0,0.2,1)]",
           expanded ? "w-[260px]" : "w-[80px]",
         )}
-        onMouseEnter={() => setExpanded(true)}
-        onMouseLeave={() => setExpanded(false)}
         aria-label="Primary navigation"
       >
-        <div className="flex items-center gap-3 px-[22px] py-5 shrink-0">
-          <div className="h-9 w-9 shrink-0 rounded-[10px] brand-gradient flex items-center justify-center">
-            <Truck size={18} className="text-white" />
-          </div>
-          {expanded && (
-            <div className="overflow-hidden whitespace-nowrap">
-              <p className="text-[13px] font-bold text-text-primary">{appName}</p>
-              {user?.roleName && (
-                <p className="text-[11px] text-text-secondary mt-0.5 capitalize">
-                  {user.roleName}
-                </p>
-              )}
+        <div className={cn("flex items-center px-[22px] py-5 shrink-0 transition-all", expanded ? "justify-between" : "flex-col justify-center gap-4")}>
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 shrink-0 rounded-[10px] brand-gradient flex items-center justify-center">
+              <Truck size={18} className="text-white" />
             </div>
-          )}
+            {expanded && (
+              <div className="overflow-hidden whitespace-nowrap">
+                <p className="text-[13px] font-bold text-text-primary">{appName}</p>
+                {user?.roleName && (
+                  <p className="text-[11px] text-text-secondary mt-0.5 capitalize">
+                    {user.roleName}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+          
+          <button
+            onClick={onToggleExpand}
+            className="p-1.5 shrink-0 rounded-lg text-text-secondary hover:bg-ink-50 transition-colors focus:outline-none"
+            aria-label="Toggle Sidebar"
+          >
+            {expanded ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
+          </button>
         </div>
 
         <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto scroll-none">

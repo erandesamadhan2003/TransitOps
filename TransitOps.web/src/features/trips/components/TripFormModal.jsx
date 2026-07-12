@@ -20,8 +20,11 @@ const DEFAULTS = {
 
 export function TripFormModal({ open, onClose }) {
   const create = useCreateTrip();
-  const { data: vehicles = [] } = useDispatchableVehicles(open);
-  const { data: drivers = [] } = useDispatchableDrivers(open);
+  const { data: allVehicles = [] } = useDispatchableVehicles(open);
+  const { data: allDrivers = [] } = useDispatchableDrivers(open);
+  
+  const vehicles = Array.isArray(allVehicles) ? allVehicles : (allVehicles?.vehicles || allVehicles?.data || []);
+  const drivers = Array.isArray(allDrivers) ? allDrivers : (allDrivers?.drivers || allDrivers?.data || []);
 
   const {
     register,
