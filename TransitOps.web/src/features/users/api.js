@@ -26,4 +26,9 @@ export const usersApi = {
       headers: { "Content-Type": "multipart/form-data" },
     }).then((res) => res.data.data);
   },
+
+  downloadTemplate: () =>
+    api
+      .get(ENDPOINTS.USERS.IMPORT_TEMPLATE, { responseType: "blob" })
+      .then((res) => res.data),
 };

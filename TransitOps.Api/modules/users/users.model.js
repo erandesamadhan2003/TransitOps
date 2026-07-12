@@ -2,7 +2,7 @@ import db from '../../config/db.js';
 
 export const findAll = async ({ roleId, isActive, search, limit, offset }) => {
     let query = `
-        SELECT u.id, u.full_name as "fullName", u.email, u.is_active, u.created_at, u.updated_at, r.name as "roleName", r.id as "roleId"
+        SELECT u.id, u.full_name as "fullName", u.email, u.is_active as "isActive", u.created_at as "createdAt", u.updated_at as "updatedAt", r.name as "roleName", r.id as "roleId"
         FROM users u 
         JOIN roles r ON u.role_id = r.id 
         WHERE 1=1
@@ -64,7 +64,7 @@ export const countAll = async ({ roleId, isActive, search }) => {
 
 export const findById = async (id) => {
     const query = `
-        SELECT u.id, u.full_name as "fullName", u.email, u.is_active, u.created_at, u.updated_at, r.name as "roleName", r.id as "roleId"
+        SELECT u.id, u.full_name as "fullName", u.email, u.is_active as "isActive", u.created_at as "createdAt", u.updated_at as "updatedAt", r.name as "roleName", r.id as "roleId"
         FROM users u 
         JOIN roles r ON u.role_id = r.id 
         WHERE u.id = $1
@@ -75,7 +75,7 @@ export const findById = async (id) => {
 
 export const findByIdWithHash = async (id) => {
     const query = `
-        SELECT u.id, u.password_hash, u.is_active, r.name as "roleName"
+        SELECT u.id, u.password_hash as "passwordHash", u.is_active as "isActive", r.name as "roleName"
         FROM users u
         JOIN roles r ON u.role_id = r.id
         WHERE u.id = $1
@@ -98,7 +98,7 @@ export const updateProfile = async (id, { fullName, roleId, isActive }) => {
             is_active = COALESCE($3, is_active),
             updated_at = now()
         WHERE id = $4
-        RETURNING id, full_name as "fullName", email, is_active, created_at, updated_at, role_id
+        RETURNING id, full_name as "fullName", email, is_active as "isActive", created_at as "createdAt", updated_at as "updatedAt", role_id as "roleId"
     `;
     const { rows } = await db.query(query, [fullName, roleId, isActive, id]);
     return rows[0];

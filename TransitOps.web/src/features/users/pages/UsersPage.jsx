@@ -6,7 +6,7 @@ import { useUsers } from "../hooks";
 import { ImportUsersModal } from "../components/ImportUsersModal";
 import { UserFormModal } from "../components/UserFormModal";
 import { ROLE_LABELS } from "@/constants/app";
-import { ENDPOINTS } from "@/api/endpoints";
+import { usersApi } from "../api";
 
 export default function UsersPage() {
   const [page, setPage] = useState(1);
@@ -98,8 +98,20 @@ export default function UsersPage() {
     },
   ];
 
-  function handleDownloadTemplate() {
-    window.open(`${import.meta.env.VITE_API_URL}${ENDPOINTS.USERS.IMPORT_TEMPLATE}`, "_blank");
+  async function handleDownloadTemplate() {
+    try {
+      const blob = await usersApi.downloadTemplate();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "user_import_template.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download template", err);
+    }
   }
 
   return (
