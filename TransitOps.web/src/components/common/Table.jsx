@@ -128,8 +128,7 @@ export function Table({
         <div className="border-t border-border px-4 py-3">
           <Pagination
             page={pagination.page}
-            pageSize={pagination.pageSize}
-            totalElements={pagination.totalElements}
+            totalPages={Math.ceil(pagination.totalElements / pagination.pageSize)}
             onPageChange={pagination.onPageChange}
           />
         </div>
