@@ -270,3 +270,104 @@ Uploads a photo for the vehicle.
 - **Response (200 OK)**: Returns the updated vehicle with the new `photoPath`.
 - **Error Responses**:
   - `400 Bad Request`: No photo uploaded, or invalid file type.
+
+---
+
+## Drivers (`/api/drivers`)
+
+### `GET /api/drivers`
+Lists drivers with optional filtering and pagination.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Query Parameters**:
+  - `status` (string, optional: `Available`, `On Trip`, `Suspended`)
+  - `licenseCategory` (string, optional)
+  - `expiringWithinDays` (number, optional)
+  - `search` (string, optional)
+  - `page` (number, optional, default: 1)
+  - `pageSize` (number, optional, default: 20)
+- **Response (200 OK)**: Returns a list of drivers and pagination details.
+
+### `GET /api/drivers/:id`
+Retrieves details of a specific driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Response (200 OK)**: Returns the driver object.
+- **Error Responses**:
+  - `404 Not Found`: Driver not found.
+
+### `POST /api/drivers`
+Registers a new driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "name": "Jane Doe",
+    "licenseNumber": "D1234567",
+    "licenseCategory": "CDL",
+    "licenseExpiry": "2027-01-01T00:00:00Z",
+    "contactNumber": "555-0101",
+    "safetyScore": 100
+  }
+  ```
+- **Response (201 Created)**: Returns the newly created driver with `status: Available`.
+- **Error Responses**:
+  - `409 Conflict`: License number already exists.
+  - `400 Bad Request`: License expiry is not a future date.
+
+### `PUT /api/drivers/:id`
+Updates driver profile information.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "contactNumber": "555-0102"
+  }
+  ```
+  *(Note: Updating `status` or `safetyScore` through this endpoint is forbidden and will throw an error)*
+- **Response (200 OK)**: Returns the updated driver.
+- **Error Responses**:
+  - `400 Bad Request`: If `status` or `safetyScore` are passed in the body.
+  - `404 Not Found`: Driver not found.
+
+### `PATCH /api/drivers/:id/safety-score`
+Updates the safety score of a driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Safety Officer`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "safetyScore": 95
+  }
+  ```
+- **Response (200 OK)**: Returns the driver with the updated safety score.
+- **Error Responses**:
+  - `400 Bad Request`: If score is outside 0-100 range.
+
+### `PATCH /api/drivers/:id/suspend`
+Suspends a driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Safety Officer`
+- **Response (200 OK)**: Returns the updated driver with `status: Suspended`.
+- **Error Responses**:
+  - `409 Conflict`: Cannot suspend a driver currently `'On Trip'`.
+
+### `PATCH /api/drivers/:id/reinstate`
+Reinstates a suspended driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Safety Officer`
+- **Response (200 OK)**: Returns the updated driver with `status: Available`.
+- **Error Responses**:
+  - `409 Conflict`: Cannot reinstate if their license is expired.
+
+### `POST /api/drivers/:id/photo`
+Uploads a photo for the driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Request Body** (`multipart/form-data`):
+  - `photo`: The image file (max 5MB, `.jpg`, `.png`, `.webp`)
+- **Response (200 OK)**: Returns the updated driver with the new `photoPath`.
+- **Error Responses**:
+  - `400 Bad Request`: No photo uploaded, or invalid file type.
