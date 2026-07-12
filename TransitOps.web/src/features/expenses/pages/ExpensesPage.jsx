@@ -135,7 +135,8 @@ export default function ExpensesPage() {
   const [expensePage, setExpensePage] = useState(1);
   const { data: fuelLogs = [], isLoading: fuelLoading } = useFuelLogs({ page: fuelPage, pageSize: 10 });
   const { data: expenses = [] } = useExpenses({ page: expensePage, pageSize: 10 });
-  const { data: vehicles = [] } = useVehicles();
+  const { data: vehiclesData = [] } = useVehicles();
+  const vehicles = Array.isArray(vehiclesData) ? vehiclesData : (vehiclesData?.vehicles || vehiclesData?.data || []);
 
   const resolvedFuelLogs = Array.isArray(fuelLogs) ? fuelLogs : (fuelLogs?.logs || fuelLogs?.data || []);
   const resolvedExpenses = Array.isArray(expenses) ? expenses : (expenses?.expenses || expenses?.data || []);
