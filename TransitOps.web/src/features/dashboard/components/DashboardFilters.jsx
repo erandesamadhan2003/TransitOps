@@ -6,9 +6,9 @@ export function DashboardFilters({ filters, onChange }) {
     <div className="flex flex-wrap gap-3">
       <Select
         placeholder="Vehicle Type: All"
-        value={filters.type ?? ""}
+        value={filters.vehicleType ?? ""}
         onChange={(e) =>
-          onChange({ ...filters, type: e.target.value || undefined })
+          onChange({ ...filters, vehicleType: e.target.value || undefined })
         }
         options={VEHICLE_TYPES.map((t) => ({ value: t, label: t }))}
         containerClassName="w-44"

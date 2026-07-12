@@ -4,11 +4,11 @@ import * as driversModel from '../drivers/drivers.model.js';
 import pool, { withTransaction } from '../../config/db.js';
 import { ConflictError, NotFoundError, BadRequestError } from '../../utils/errors.js';
 
-export const listTrips = async ({ status, vehicleId, driverId, search, dateFrom, dateTo, page = 1, pageSize = 20 }) => {
+export const listTrips = async ({ status, vehicleId, driverId, search, dateFrom, dateTo, vehicleType, region, page = 1, pageSize = 20 }) => {
     const limit = Math.min(Math.max(parseInt(pageSize, 10) || 20, 1), 100);
     const offset = (Math.max(parseInt(page, 10) || 1, 1) - 1) * limit;
 
-    const filters = { status, vehicleId, driverId, search, dateFrom, dateTo, limit, offset };
+    const filters = { status, vehicleId, driverId, search, dateFrom, dateTo, vehicleType, region, limit, offset };
     const trips = await tripsModel.findAll(filters);
     const total = await tripsModel.countAll(filters);
 

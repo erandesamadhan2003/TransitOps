@@ -188,6 +188,10 @@ export const countByStatus = async (filters = {}) => {
         params.push(filters.region);
         query += ` AND region = $${params.length}`;
     }
+    if (filters.status) {
+        params.push(filters.status);
+        query += ` AND status = $${params.length}`;
+    }
     query += ` GROUP BY status`;
     const { rows } = await db.query(query, params);
     return rows;
@@ -209,7 +213,8 @@ export const deleteDocument = async (vehicleId, docId) => {
     return rows[0];
 };
 
-export const fleetUtilization = async ({ vehicleType, region } = {}) => {
+export const fleetUtilization = async (filters = {}) => {
+    const { vehicleType, region, status } = filters;
     let query = `
         SELECT 
             COUNT(*) FILTER (WHERE status = 'On Trip')::int AS on_trip, 
@@ -227,6 +232,10 @@ export const fleetUtilization = async ({ vehicleType, region } = {}) => {
     if (region) {
         query += ` AND region = $${paramIndex++}`;
         params.push(region);
+    }
+    if (filters && filters.status) {
+        query += ` AND status = $${paramIndex++}`;
+        params.push(filters.status);
     }
 
     const { rows } = await db.query(query, params);

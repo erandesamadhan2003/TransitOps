@@ -1,6 +1,6 @@
 import db from '../../config/db.js';
 
-export const findAll = async ({ status, vehicleId, driverId, search, dateFrom, dateTo, limit, offset }) => {
+export const findAll = async ({ status, vehicleId, driverId, search, dateFrom, dateTo, vehicleType, region, limit, offset }) => {
     let query = `
         SELECT t.id, t.source, t.destination, t.vehicle_id as "vehicleId", t.driver_id as "driverId",
                t.cargo_weight as "cargoWeight", t.planned_distance as "plannedDistance",
@@ -39,6 +39,16 @@ export const findAll = async ({ status, vehicleId, driverId, search, dateFrom, d
         paramIndex++;
     }
 
+    if (vehicleType) {
+        query += ` AND v.vehicle_type = $${paramIndex++}`;
+        params.push(vehicleType);
+    }
+    
+    if (region) {
+        query += ` AND v.region = $${paramIndex++}`;
+        params.push(region);
+    }
+
     if (dateFrom) {
         query += ` AND t.created_at >= $${paramIndex++}`;
         params.push(dateFrom);
@@ -56,8 +66,12 @@ export const findAll = async ({ status, vehicleId, driverId, search, dateFrom, d
     return rows;
 };
 
-export const countAll = async ({ status, vehicleId, driverId, search, dateFrom, dateTo }) => {
-    let query = `SELECT COUNT(*) FROM trips t WHERE 1=1`;
+export const countAll = async ({ status, vehicleId, driverId, search, dateFrom, dateTo, vehicleType, region }) => {
+    let query = `
+        SELECT COUNT(*) FROM trips t 
+        LEFT JOIN vehicles v ON t.vehicle_id = v.id 
+        WHERE 1=1
+    `;
     const params = [];
     let paramIndex = 1;
 
@@ -80,6 +94,16 @@ export const countAll = async ({ status, vehicleId, driverId, search, dateFrom, 
         query += ` AND (t.source ILIKE $${paramIndex} OR t.destination ILIKE $${paramIndex})`;
         params.push(`%${search}%`);
         paramIndex++;
+    }
+
+    if (vehicleType) {
+        query += ` AND v.vehicle_type = $${paramIndex++}`;
+        params.push(vehicleType);
+    }
+    
+    if (region) {
+        query += ` AND v.region = $${paramIndex++}`;
+        params.push(region);
     }
     
     if (dateFrom) {

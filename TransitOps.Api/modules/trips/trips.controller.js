@@ -4,9 +4,9 @@ import { success, created } from '../../utils/response.js';
 
 export const list = async (req, res, next) => {
     try {
-        const { status, vehicleId, driverId, search, dateFrom, dateTo, page, pageSize, format } = req.query;
+        const { status, vehicleId, driverId, search, dateFrom, dateTo, page, pageSize, format, vehicleType, region } = req.query;
         const limit = format === 'csv' ? 10000 : pageSize;
-        const result = await tripsService.listTrips({ status, vehicleId, driverId, search, dateFrom, dateTo, page, pageSize: limit });
+        const result = await tripsService.listTrips({ status, vehicleId, driverId, search, dateFrom, dateTo, vehicleType, region, page, pageSize: limit });
 
         if (format === 'csv') {
             const csv = generateCsv(result.trips);

@@ -20,7 +20,12 @@ export default function DashboardPage() {
   const [filters, setFilters] = useState({});
   const { data: kpis, isLoading, error, refetch } = useDashboardKpis(filters);
   const { data: charts } = useDashboardCharts();
-  const { data: tripsData } = useTrips({ page: 1, pageSize: 5 });
+  const { data: tripsData } = useTrips({ 
+    page: 1, 
+    pageSize: 5, 
+    vehicleType: filters.vehicleType, 
+    region: filters.region 
+  });
 
   return (
     <div className="animate-fade-up space-y-6">
