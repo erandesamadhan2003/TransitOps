@@ -58,6 +58,15 @@ export const retire = async (req, res, next) => {
     }
 };
 
+export const verify = async (req, res, next) => {
+    try {
+        const vehicle = await vehiclesService.verifyVehicle(req.params.id);
+        return success(res, { message: 'Vehicle verified successfully', data: vehicle });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const uploadPhoto = async (req, res, next) => {
     try {
         if (!req.file) {

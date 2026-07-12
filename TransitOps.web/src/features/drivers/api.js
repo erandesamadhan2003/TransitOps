@@ -27,4 +27,18 @@ export const driversApi = {
 
   wake: (id) =>
     api.patch(ENDPOINTS.DRIVERS.WAKE(id)).then((r) => r.data.data || r.data),
+
+  verify: (id) =>
+    api.patch(`${ENDPOINTS.DRIVERS.LIST}/${id}/verify`).then((r) => r.data.data || r.data),
+
+  getDocuments: (id) =>
+    api.get(`${ENDPOINTS.DRIVERS.LIST}/${id}/documents`).then((r) => r.data.data),
+
+  uploadDocument: ({ id, formData }) =>
+    api.post(`${ENDPOINTS.DRIVERS.LIST}/${id}/documents`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }).then((r) => r.data.data),
+
+  deleteDocument: ({ id, docId }) =>
+    api.delete(`${ENDPOINTS.DRIVERS.LIST}/${id}/documents/${docId}`).then((r) => r.data),
 };

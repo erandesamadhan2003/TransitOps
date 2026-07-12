@@ -1,4 +1,6 @@
 import { useState } from "react";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 import { Download, Gauge, Fuel, TrendingUp, DollarSign } from "lucide-react";
 import { Card, CardHeader, StatCard } from "@/components/ui";
 import { Button, Loader, ErrorState, Pagination } from "@/components/common";
@@ -50,6 +52,50 @@ function exportToCsv(analytics, kpis) {
   URL.revokeObjectURL(url);
 }
 
+// ── PDF export helper ────────────────────────────────────────────────
+function exportToPdf(analytics, kpis) {
+  const doc = new jsPDF();
+  
+  // Title
+  doc.setFontSize(18);
+  doc.text("TransitOps Analytics Report", 14, 20);
+  
+  // Timestamp
+  doc.setFontSize(10);
+  doc.setTextColor(100);
+  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+  
+  // Summary Section
+  doc.setFontSize(14);
+  doc.setTextColor(40);
+  doc.text("Fleet Summary", 14, 40);
+  
+  doc.setFontSize(11);
+  doc.text(`Fleet Utilization: ${kpis?.fleetUtilizationPercent ?? 0}%`, 14, 50);
+  doc.text(`Drivers on Duty: ${kpis?.driversOnDuty ?? 0}`, 14, 56);
+  doc.text(`Fuel Efficiency: ${analytics?.fuelEfficiencyKmL ?? "N/A"} km/L`, 14, 62);
+  doc.text(`Total Fleet Revenue: INR ${analytics?.totalRevenue ?? 0}`, 14, 68);
+  
+  // Per-vehicle table
+  const tableData = (analytics?.vehicles ?? []).map((v) => [
+    v.vehicleName,
+    v.registrationNumber,
+    `INR ${v.totalRevenue}`,
+    `INR ${v.totalCost}`,
+    `${v.roi ?? "N/A"}%`
+  ]);
+
+  doc.autoTable({
+    startY: 78,
+    head: [["Vehicle", "Registration", "Revenue", "Total Cost", "ROI"]],
+    body: tableData,
+    theme: "striped",
+    headStyles: { fillColor: [79, 70, 229] }, // Tailwind indigo-600
+  });
+  
+  doc.save(`transitops_analytics_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
 // ── ROI badge colour ─────────────────────────────────────────────────
 function RoiBadge({ value }) {
   if (value == null) return <span className="text-xs text-text-tertiary">N/A</span>;
@@ -83,22 +129,40 @@ export default function ReportsPage() {
             Fleet performance, cost breakdown, and ROI insights.
           </p>
         </div>
-        <Button
-          variant="secondary"
-          icon={<Download size={16} />}
-          onClick={async () => {
-            try {
-              const fullAnalytics = await reportsApi.getAnalytics();
-              exportToCsv(fullAnalytics, kpis);
-            } catch (err) {
-              console.error("Failed to fetch full analytics for export", err);
-              exportToCsv(analytics, kpis);
-            }
-          }}
-          disabled={!analytics}
-        >
-          Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="secondary"
+            icon={<Download size={16} />}
+            onClick={async () => {
+              try {
+                const fullAnalytics = await reportsApi.getAnalytics();
+                exportToPdf(fullAnalytics, kpis);
+              } catch (err) {
+                console.error("Failed to fetch full analytics for PDF export", err);
+                exportToPdf(analytics, kpis);
+              }
+            }}
+            disabled={!analytics}
+          >
+            Export PDF
+          </Button>
+          <Button
+            variant="secondary"
+            icon={<Download size={16} />}
+            onClick={async () => {
+              try {
+                const fullAnalytics = await reportsApi.getAnalytics();
+                exportToCsv(fullAnalytics, kpis);
+              } catch (err) {
+                console.error("Failed to fetch full analytics for export", err);
+                exportToCsv(analytics, kpis);
+              }
+            }}
+            disabled={!analytics}
+          >
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {isLoading && <Loader fullHeight label="Loading analytics…" />}

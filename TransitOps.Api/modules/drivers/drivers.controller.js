@@ -94,6 +94,15 @@ export const wakeDriver = async (req, res, next) => {
     }
 };
 
+export const verify = async (req, res, next) => {
+    try {
+        const driver = await driversService.verifyDriver(req.params.id);
+        return success(res, { message: 'Driver verified successfully', data: driver });
+    } catch (err) {
+        next(err);
+    }
+};
+
 export const uploadPhoto = async (req, res, next) => {
     try {
         if (!req.file) {

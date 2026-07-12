@@ -1,10 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal, Button, Input } from "@/components/common";
 import { Select } from "@/components/forms";
 import { vehicleSchema } from "../schemas";
-import { useCreateVehicle, useUpdateVehicle } from "../hooks";
+import { useCreateVehicle, useUpdateVehicle, useUploadVehicleDocument } from "../hooks";
 import { VEHICLE_TYPES, REGIONS } from "@/constants/app";
 
 const DEFAULTS = {
@@ -22,7 +22,9 @@ export function VehicleFormModal({ open, onClose, vehicle }) {
   const isEdit = Boolean(vehicle);
   const create = useCreateVehicle();
   const update = useUpdateVehicle();
-  const pending = create.isPending || update.isPending;
+  const uploadDoc = useUploadVehicleDocument();
+  const pending = create.isPending || update.isPending || uploadDoc.isPending;
+  const [files, setFiles] = useState([]);
 
   const {
     register,
@@ -35,14 +37,31 @@ export function VehicleFormModal({ open, onClose, vehicle }) {
   });
 
   useEffect(() => {
-    if (open) reset(vehicle ? { ...DEFAULTS, ...vehicle } : DEFAULTS);
+    if (open) {
+      reset(vehicle ? { ...DEFAULTS, ...vehicle } : DEFAULTS);
+      setFiles([]);
+    }
   }, [open, vehicle, reset]);
 
-  function onSubmit(values) {
-    const mutation = isEdit
-      ? update.mutateAsync({ id: vehicle.id, payload: values })
-      : create.mutateAsync(values);
-    mutation.then(onClose).catch(() => {});
+  async function onSubmit(values) {
+    try {
+      if (isEdit) {
+        await update.mutateAsync({ id: vehicle.id, payload: values });
+      } else {
+        const newVehicle = await create.mutateAsync(values);
+        if (files.length > 0) {
+          for (const file of files) {
+            const formData = new FormData();
+            formData.append("document", file);
+            formData.append("docType", "Initial Document");
+            await uploadDoc.mutateAsync({ id: newVehicle.id, formData });
+          }
+        }
+      }
+      onClose();
+    } catch (error) {
+      // Error is handled by mutations
+    }
   }
 
   return (
@@ -128,6 +147,29 @@ export function VehicleFormModal({ open, onClose, vehicle }) {
           error={errors.region?.message}
           {...register("region")}
         />
+        {!isEdit && (
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">
+              Initial Documents
+            </label>
+            <input
+              type="file"
+              multiple
+              onChange={(e) => setFiles(Array.from(e.target.files))}
+              className="block w-full text-sm text-text-secondary
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-brand-50 file:text-brand-700
+                hover:file:bg-brand-100"
+            />
+            {files.length > 0 && (
+              <p className="mt-2 text-xs text-text-tertiary">
+                {files.length} file(s) selected
+              </p>
+            )}
+          </div>
+        )}
       </form>
     </Modal>
   );

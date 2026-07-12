@@ -1,10 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Modal, Button, Input } from "@/components/common";
 import { Select } from "@/components/forms";
 import { driverSchema } from "../schemas";
-import { useCreateDriver, useUpdateDriver } from "../hooks";
+import { useCreateDriver, useUpdateDriver, useUploadDriverDocument } from "../hooks";
 import { LICENSE_CATEGORIES } from "@/constants/app";
 
 const DEFAULTS = {
@@ -20,7 +20,9 @@ export function DriverFormModal({ open, onClose, driver }) {
   const isEdit = Boolean(driver);
   const create = useCreateDriver();
   const update = useUpdateDriver();
-  const pending = create.isPending || update.isPending;
+  const uploadDoc = useUploadDriverDocument();
+  const pending = create.isPending || update.isPending || uploadDoc.isPending;
+  const [files, setFiles] = useState([]);
 
   const {
     register,
@@ -30,14 +32,31 @@ export function DriverFormModal({ open, onClose, driver }) {
   } = useForm({ resolver: zodResolver(driverSchema), defaultValues: DEFAULTS });
 
   useEffect(() => {
-    if (open) reset(driver ? { ...DEFAULTS, ...driver } : DEFAULTS);
+    if (open) {
+      reset(driver ? { ...DEFAULTS, ...driver } : DEFAULTS);
+      setFiles([]);
+    }
   }, [open, driver, reset]);
 
-  function onSubmit(values) {
-    const mutation = isEdit
-      ? update.mutateAsync({ id: driver.id, payload: values })
-      : create.mutateAsync(values);
-    mutation.then(onClose).catch(() => {});
+  async function onSubmit(values) {
+    try {
+      if (isEdit) {
+        await update.mutateAsync({ id: driver.id, payload: values });
+      } else {
+        const newDriver = await create.mutateAsync(values);
+        if (files.length > 0) {
+          for (const file of files) {
+            const formData = new FormData();
+            formData.append("document", file);
+            formData.append("docType", "Initial Document");
+            await uploadDoc.mutateAsync({ id: newDriver.id, formData });
+          }
+        }
+      }
+      onClose();
+    } catch (error) {
+      // Handled by mutations
+    }
   }
 
   return (
@@ -108,6 +127,29 @@ export function DriverFormModal({ open, onClose, driver }) {
           error={errors.safetyScore?.message}
           {...register("safetyScore")}
         />
+        {!isEdit && (
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-text-secondary mb-1.5">
+              Initial Documents
+            </label>
+            <input
+              type="file"
+              multiple
+              onChange={(e) => setFiles(Array.from(e.target.files))}
+              className="block w-full text-sm text-text-secondary
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-brand-50 file:text-brand-700
+                hover:file:bg-brand-100"
+            />
+            {files.length > 0 && (
+              <p className="mt-2 text-xs text-text-tertiary">
+                {files.length} file(s) selected
+              </p>
+            )}
+          </div>
+        )}
       </form>
     </Modal>
   );

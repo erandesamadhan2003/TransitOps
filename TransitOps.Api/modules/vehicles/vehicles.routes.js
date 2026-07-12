@@ -19,6 +19,7 @@ router.post('/', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), cr
 router.put('/:id', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), updateVehicleRules, handleValidation, vehiclesController.update);
 
 router.patch('/:id/retire', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.retire);
+router.patch('/:id/verify', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.verify);
 router.post('/:id/photo', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), upload.single('photo'), vehiclesController.uploadPhoto);
 
 router.get('/:id/documents', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.listDocuments);

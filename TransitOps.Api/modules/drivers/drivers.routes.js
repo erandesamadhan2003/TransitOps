@@ -24,6 +24,7 @@ router.post('/:id/photo', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MAN
 router.patch('/:id/safety-score', authenticate, requireRole(ROLES.ADMIN, ROLES.SAFETY_OFFICER), updateSafetyScoreRules, handleValidation, driversController.updateSafetyScore);
 router.patch('/:id/suspend', authenticate, requireRole(ROLES.ADMIN, ROLES.SAFETY_OFFICER), driversController.suspend);
 router.patch('/:id/reinstate', authenticate, requireRole(ROLES.ADMIN, ROLES.SAFETY_OFFICER), driversController.reinstate);
+router.patch('/:id/verify', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.SAFETY_OFFICER), driversController.verify);
 router.patch('/:id/off-duty', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.SAFETY_OFFICER), driversController.setOffDuty);
 router.patch('/:id/wake', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.SAFETY_OFFICER), driversController.wakeDriver);
 

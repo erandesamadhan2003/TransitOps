@@ -71,3 +71,51 @@ export function useDeleteVehicle() {
       toast.error(err.message || "Could not remove the vehicle."),
   });
 }
+
+export function useVerifyVehicle() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: vehiclesApi.verify,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success("Vehicle verified.");
+    },
+    onError: (err) =>
+      toast.error(err.message || "Could not verify the vehicle."),
+  });
+}
+
+export function useVehicleDocuments(id) {
+  return useQuery({
+    queryKey: ["vehicles", id, "documents"],
+    queryFn: () => vehiclesApi.getDocuments(id),
+    enabled: Boolean(id),
+  });
+}
+
+export function useUploadVehicleDocument() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: vehiclesApi.uploadDocument,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles", variables.id, "documents"] });
+      toast.success("Document uploaded successfully.");
+    },
+    onError: (err) => toast.error(err.message || "Could not upload document."),
+  });
+}
+
+export function useDeleteVehicleDocument() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: vehiclesApi.deleteDocument,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles", variables.id, "documents"] });
+      toast.success("Document deleted.");
+    },
+    onError: (err) => toast.error(err.message || "Could not delete document."),
+  });
+}

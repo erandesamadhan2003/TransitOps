@@ -106,3 +106,51 @@ export function useWakeDriver() {
       toast.error(err.message || "Could not change driver status."),
   });
 }
+
+export function useVerifyDriver() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: driversApi.verify,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      toast.success("Driver verified.");
+    },
+    onError: (err) =>
+      toast.error(err.message || "Could not verify the driver."),
+  });
+}
+
+export function useDriverDocuments(id) {
+  return useQuery({
+    queryKey: ["drivers", id, "documents"],
+    queryFn: () => driversApi.getDocuments(id),
+    enabled: Boolean(id),
+  });
+}
+
+export function useUploadDriverDocument() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: driversApi.uploadDocument,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["drivers", variables.id, "documents"] });
+      toast.success("Document uploaded successfully.");
+    },
+    onError: (err) => toast.error(err.message || "Could not upload document."),
+  });
+}
+
+export function useDeleteDriverDocument() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: driversApi.deleteDocument,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["drivers", variables.id, "documents"] });
+      toast.success("Document deleted.");
+    },
+    onError: (err) => toast.error(err.message || "Could not delete document."),
+  });
+}

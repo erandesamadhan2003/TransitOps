@@ -147,6 +147,18 @@ export const wakeDriver = async (id) => {
     return { ...driver, status: 'Available' };
 };
 
+export const verifyDriver = async (id) => {
+    const driver = await driversModel.findById(id);
+    if (!driver) throw new NotFoundError('Driver not found');
+
+    if (driver.status !== 'Pending') {
+        throw new ConflictError('Driver is not in Pending status');
+    }
+
+    await driversModel.updateStatus(id, 'Available');
+    return { ...driver, status: 'Available' };
+};
+
 export const uploadDriverPhoto = async (id, file) => {
     const driver = await driversModel.findById(id);
     if (!driver) throw new NotFoundError('Driver not found');

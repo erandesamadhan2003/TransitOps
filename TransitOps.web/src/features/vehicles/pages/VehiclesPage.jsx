@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Truck } from "lucide-react";
+import { Plus, Pencil, Trash2, Truck, FileText, CheckCircle } from "lucide-react";
 import { Card, StatusBadge } from "@/components/ui";
-import { Button, Table, ConfirmDialog } from "@/components/common";
-import { useVehicles, useDeleteVehicle } from "../hooks";
+import { Button, Table, ConfirmDialog, DocumentsModal } from "@/components/common";
+import { useVehicles, useDeleteVehicle, useVehicleDocuments, useUploadVehicleDocument, useDeleteVehicleDocument, useVerifyVehicle } from "../hooks";
 import { VehicleFilters } from "../components/VehicleFilters";
 import { VehicleFormModal } from "../components/VehicleFormModal";
 import { useDebounce } from "@/hooks";
@@ -21,10 +21,16 @@ export default function VehiclesPage() {
     refetch,
   } = useVehicles({ ...filters, search: debouncedSearch, page, pageSize: 10 });
   const deleteVehicle = useDeleteVehicle();
+  const verifyVehicle = useVerifyVehicle();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [documentVehicle, setDocumentVehicle] = useState(null);
+  
+  const { data: vehicleDocs, isLoading: docsLoading } = useVehicleDocuments(documentVehicle?.id);
+  const uploadDoc = useUploadVehicleDocument();
+  const deleteDoc = useDeleteVehicleDocument();
 
   function openCreate() {
     setEditingVehicle(null);
@@ -67,40 +73,66 @@ export default function VehiclesPage() {
         accessorKey: "status",
         cell: (info) => <StatusBadge status={info.getValue()} />,
       },
-      ...(canEdit
-        ? [
-            {
-              header: "",
-              id: "actions",
-              cell: ({ row }) => (
-                <div className="flex justify-end gap-1">
+      {
+        header: "",
+        id: "actions",
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-1">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setDocumentVehicle(row.original);
+              }}
+              aria-label={`Documents for ${row.original.vehicleName}`}
+              className="rounded-lg p-1.5 text-text-tertiary hover:bg-brand-50 hover:text-brand-600"
+            >
+              <FileText size={14} />
+            </button>
+            {canEdit && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEdit(row.original);
+                  }}
+                  aria-label={`Edit ${row.original.vehicleName}`}
+                  className="rounded-lg p-1.5 text-text-tertiary hover:bg-ink-50 hover:text-ink-600"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmDelete(row.original);
+                  }}
+                  aria-label={`Remove ${row.original.vehicleName}`}
+                  title="Remove"
+                  className="rounded-lg p-1.5 text-text-tertiary hover:bg-red-50 hover:text-red-600"
+                >
+                  <Trash2 size={14} />
+                </button>
+                {row.original.status === 'Pending' && (
                   <button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      openEdit(row.original);
+                      verifyVehicle.mutateAsync(row.original.id);
                     }}
-                    aria-label={`Edit ${row.original.vehicleName}`}
-                    className="rounded-lg p-1.5 text-text-tertiary hover:bg-ink-50 hover:text-ink-600"
+                    aria-label={`Verify ${row.original.vehicleName}`}
+                    title="Verify"
+                    className="rounded-lg p-1.5 text-text-tertiary hover:bg-green-50 hover:text-green-600"
                   >
-                    <Pencil size={14} />
+                    <CheckCircle size={14} />
                   </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmDelete(row.original);
-                    }}
-                    aria-label={`Remove ${row.original.vehicleName}`}
-                    className="rounded-lg p-1.5 text-text-tertiary hover:bg-red-50 hover:text-red-600"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ),
-            },
-          ]
-        : []),
+                )}
+              </>
+            )}
+          </div>
+        ),
+      },
     ],
     [canEdit],
   );
@@ -163,6 +195,18 @@ export default function VehiclesPage() {
           vehicle={editingVehicle}
         />
       )}
+      
+      <DocumentsModal
+        isOpen={Boolean(documentVehicle)}
+        onClose={() => setDocumentVehicle(null)}
+        entityId={documentVehicle?.id}
+        entityName={documentVehicle?.vehicleName}
+        canEdit={canEdit}
+        documents={vehicleDocs}
+        isLoading={docsLoading}
+        onUpload={uploadDoc.mutateAsync}
+        onDelete={deleteDoc.mutateAsync}
+      />
 
       <ConfirmDialog
         open={Boolean(confirmDelete)}

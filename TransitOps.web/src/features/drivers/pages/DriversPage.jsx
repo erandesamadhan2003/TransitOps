@@ -2,16 +2,18 @@ import { useMemo, useState } from "react";
 import {
   Plus,
   Pencil,
-  Ban,
-  CheckCircle,
-  Users,
-  Search,
+  UserX,
+  UserCheck,
   AlertTriangle,
   MoonStar,
   Sun,
+  FileText,
+  Users,
+  Search,
+  CheckCircle,
 } from "lucide-react";
 import { Card, StatusBadge } from "@/components/ui";
-import { Button, Table, ConfirmDialog } from "@/components/common";
+import { Button, Table, ConfirmDialog, DocumentsModal } from "@/components/common";
 import { Select } from "@/components/forms";
 import {
   useDrivers,
@@ -19,6 +21,10 @@ import {
   useReinstateDriver,
   useSetOffDuty,
   useWakeDriver,
+  useDriverDocuments,
+  useUploadDriverDocument,
+  useDeleteDriverDocument,
+  useVerifyDriver,
 } from "../hooks";
 import { DriverFormModal } from "../components/DriverFormModal";
 import { useDebounce } from "@/hooks";
@@ -43,7 +49,13 @@ export default function DriversPage() {
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingDriver, setEditingDriver] = useState(null);
-  const [pendingAction, setPendingAction] = useState(null); // { type, driver }
+  const [pendingAction, setPendingAction] = useState(null);
+  const [documentDriver, setDocumentDriver] = useState(null);
+  
+  const { data: driverDocs, isLoading: docsLoading } = useDriverDocuments(documentDriver?.id);
+  const uploadDoc = useUploadDriverDocument();
+  const deleteDoc = useDeleteDriverDocument();
+  const verifyDriver = useVerifyDriver();
 
   function openCreate() {
     setEditingDriver(null);
@@ -149,84 +161,113 @@ export default function DriversPage() {
         accessorKey: "status",
         cell: (info) => <StatusBadge status={info.getValue()} />,
       },
-      ...(canEdit
-        ? [
-            {
-              header: "",
-              id: "actions",
-              cell: ({ row }) => {
-                const d = row.original;
-                const isOnTrip = d.status === DRIVER_STATUS.ON_TRIP;
-                return (
-                  <div className="flex justify-end gap-1">
+      {
+        header: "",
+        id: "actions",
+        cell: ({ row }) => {
+          const d = row.original;
+          const isOnTrip = d.status === DRIVER_STATUS.ON_TRIP;
+          return (
+            <div className="flex justify-end gap-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDocumentDriver(d);
+                }}
+                aria-label={`Documents for ${d.name}`}
+                title="Documents"
+                className="rounded-lg p-1.5 text-text-tertiary hover:bg-brand-50 hover:text-brand-600"
+              >
+                <FileText size={14} />
+              </button>
+              
+              {canEdit && (
+                <>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); openEdit(d); }}
+                    aria-label={`Edit ${d.name}`}
+                    title="Edit"
+                    className="rounded-lg p-1.5 text-text-tertiary hover:bg-ink-50 hover:text-ink-600"
+                  >
+                    <Pencil size={14} />
+                  </button>
+
+                  {d.status === DRIVER_STATUS.AVAILABLE && (
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); openEdit(d); }}
-                      aria-label={`Edit ${d.name}`}
-                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-ink-50 hover:text-ink-600"
+                      onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "offDuty", driver: d }); }}
+                      aria-label={`Set ${d.name} Off Duty`}
+                      title="Set Off Duty"
+                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-amber-50 hover:text-amber-600"
                     >
-                      <Pencil size={14} />
+                      <MoonStar size={14} />
                     </button>
+                  )}
 
-                    {d.status === DRIVER_STATUS.AVAILABLE && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "offDuty", driver: d }); }}
-                        aria-label={`Set ${d.name} Off Duty`}
-                        title="Set Off Duty"
-                        className="rounded-lg p-1.5 text-text-tertiary hover:bg-amber-50 hover:text-amber-600"
-                      >
-                        <MoonStar size={14} />
-                      </button>
-                    )}
+                  {d.status === DRIVER_STATUS.OFF_DUTY && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "wake", driver: d }); }}
+                      aria-label={`Return ${d.name} to Available`}
+                      title="Return to Available"
+                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-teal-50 hover:text-teal-600"
+                    >
+                      <Sun size={14} />
+                    </button>
+                  )}
 
-                    {d.status === DRIVER_STATUS.OFF_DUTY && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "wake", driver: d }); }}
-                        aria-label={`Return ${d.name} to Available`}
-                        title="Return to Available"
-                        className="rounded-lg p-1.5 text-text-tertiary hover:bg-teal-50 hover:text-teal-600"
-                      >
-                        <Sun size={14} />
-                      </button>
-                    )}
+                  {(d.status === DRIVER_STATUS.AVAILABLE || d.status === DRIVER_STATUS.OFF_DUTY) && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "suspend", driver: d }); }}
+                      aria-label={`Suspend ${d.name}`}
+                      title="Suspend"
+                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-red-50 hover:text-red-600"
+                    >
+                      <UserX size={14} />
+                    </button>
+                  )}
 
-                    {(d.status === DRIVER_STATUS.AVAILABLE || d.status === DRIVER_STATUS.OFF_DUTY) && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "suspend", driver: d }); }}
-                        aria-label={`Suspend ${d.name}`}
-                        title="Suspend"
-                        className="rounded-lg p-1.5 text-text-tertiary hover:bg-red-50 hover:text-red-600"
-                      >
-                        <Ban size={14} />
-                      </button>
-                    )}
+                  {d.status === DRIVER_STATUS.SUSPENDED && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "reinstate", driver: d }); }}
+                      aria-label={`Reinstate ${d.name}`}
+                      title="Reinstate"
+                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-green-50 hover:text-green-600"
+                    >
+                      <UserCheck size={14} />
+                    </button>
+                  )}
 
-                    {d.status === DRIVER_STATUS.SUSPENDED && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); setPendingAction({ type: "reinstate", driver: d }); }}
-                        aria-label={`Reinstate ${d.name}`}
-                        title="Reinstate"
-                        className="rounded-lg p-1.5 text-text-tertiary hover:bg-green-50 hover:text-green-600"
-                      >
-                        <CheckCircle size={14} />
-                      </button>
-                    )}
+                  {d.status === 'Pending' && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        verifyDriver.mutateAsync(d.id);
+                      }}
+                      aria-label={`Verify ${d.name}`}
+                      title="Verify"
+                      className="rounded-lg p-1.5 text-text-tertiary hover:bg-green-50 hover:text-green-600"
+                    >
+                      <CheckCircle size={14} />
+                    </button>
+                  )}
 
-                    {isOnTrip && (
-                      <span className="px-2 py-1 rounded text-[11px] text-ink-500 bg-ink-50">
-                        On Trip
-                      </span>
-                    )}
-                  </div>
-                );
-              },
-            },
-          ]
-        : []),
+                  {isOnTrip && (
+                    <span className="px-2 py-1 rounded text-[11px] text-ink-500 bg-ink-50">
+                      On Trip
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          );
+        },
+      },
     ],
     [canEdit],
   );
@@ -320,6 +361,18 @@ export default function DriversPage() {
           driver={editingDriver}
         />
       )}
+      
+      <DocumentsModal
+        isOpen={Boolean(documentDriver)}
+        onClose={() => setDocumentDriver(null)}
+        entityId={documentDriver?.id}
+        entityName={documentDriver?.name}
+        canEdit={canEdit}
+        documents={driverDocs}
+        isLoading={docsLoading}
+        onUpload={uploadDoc.mutateAsync}
+        onDelete={deleteDoc.mutateAsync}
+      />
 
       <ConfirmDialog
         open={Boolean(pendingAction)}

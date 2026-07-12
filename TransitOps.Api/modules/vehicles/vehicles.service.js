@@ -67,6 +67,18 @@ export const retireVehicle = async (id) => {
     return { ...vehicle, status: 'Retired' };
 };
 
+export const verifyVehicle = async (id) => {
+    const vehicle = await vehiclesModel.findById(id);
+    if (!vehicle) throw new NotFoundError('Vehicle not found');
+
+    if (vehicle.status !== 'Pending') {
+        throw new ConflictError('Vehicle is not in Pending status');
+    }
+
+    await vehiclesModel.updateStatus(id, 'Available');
+    return { ...vehicle, status: 'Available' };
+};
+
 export const uploadVehiclePhoto = async (id, file) => {
     const vehicle = await vehiclesModel.findById(id);
     if (!vehicle) throw new NotFoundError('Vehicle not found');
