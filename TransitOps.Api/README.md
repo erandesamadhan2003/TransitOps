@@ -15,6 +15,11 @@ A comprehensive backend ERP API for fleet and transit operations.
 
 Full endpoint documentation is available in [api.md](./api.md).
 
+## Default Seeded Accounts
+
+After running the database seed (`npm run seed`), several test accounts will be created for each role (e.g., `admin@transitops.com`, `fleet@transitops.com`, `dispatcher@transitops.com`).
+The default password for all seeded accounts is: **`password123`**
+
 ## Developer Setup
 
 You can use either `bun` or `npm`.

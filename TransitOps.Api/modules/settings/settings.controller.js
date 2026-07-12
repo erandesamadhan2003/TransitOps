@@ -1,10 +1,10 @@
 import * as settingsService from './settings.service.js';
-import { response } from '../../utils/response.js';
+import { success } from '../../utils/response.js';
 
 export const getSettings = async (req, res, next) => {
     try {
         const settings = await settingsService.getSettings();
-        response.success(res, { data: settings });
+        success(res, { data: settings });
     } catch (err) {
         next(err);
     }
@@ -13,7 +13,7 @@ export const getSettings = async (req, res, next) => {
 export const updateSettings = async (req, res, next) => {
     try {
         const settings = await settingsService.updateSettings(req.body);
-        response.success(res, { message: 'Settings updated successfully', data: settings });
+        success(res, { message: 'Settings updated successfully', data: settings });
     } catch (err) {
         next(err);
     }

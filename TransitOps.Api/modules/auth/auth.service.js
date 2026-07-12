@@ -42,11 +42,11 @@ export const register = async ({ fullName, email, password, roleName, user }) =>
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await authModel.createUser({ fullName, email, passwordHash, roleId: role.id });
+    const newUser = await authModel.createUser({ fullName, email, passwordHash, roleId: role.id });
     
     // Add roleName to user object for consistency
-    user.roleName = role.name;
-    return user;
+    newUser.roleName = role.name;
+    return newUser;
 };
 
 export const login = async ({ email, password }) => {
