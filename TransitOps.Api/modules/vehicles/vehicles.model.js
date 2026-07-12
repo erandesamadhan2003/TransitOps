@@ -144,10 +144,26 @@ export const update = async (id, fields) => {
     return rows[0];
 };
 
-export const updateStatus = async (id, status, client = null) => {
-    const query = `UPDATE vehicles SET status = $1, updated_at = now() WHERE id = $2`;
-    const dbClient = client || db;
-    await dbClient.query(query, [status, id]);
+export const updateStatus = async (id, status, client = db) => {
+    const query = `
+        UPDATE vehicles 
+        SET status = $1, updated_at = now() 
+        WHERE id = $2 
+        RETURNING *
+    `;
+    const { rows } = await client.query(query, [status, id]);
+    return rows[0];
+};
+
+export const updateOdometer = async (id, newOdometer, client = db) => {
+    const query = `
+        UPDATE vehicles 
+        SET odometer = $1, updated_at = now() 
+        WHERE id = $2 
+        RETURNING *
+    `;
+    const { rows } = await client.query(query, [newOdometer, id]);
+    return rows[0];
 };
 
 export const updatePhotoPath = async (id, photoPath) => {
@@ -161,23 +177,36 @@ export const isReferencedByTrips = async (id) => {
     return rows.length > 0;
 };
 
-export const countByStatus = async ({ vehicleType, region } = {}) => {
+export const countByStatus = async (filters = {}) => {
     let query = `SELECT status, COUNT(*)::int as count FROM vehicles WHERE 1=1`;
     const params = [];
-    let paramIndex = 1;
-
-    if (vehicleType) {
-        query += ` AND vehicle_type = $${paramIndex++}`;
-        params.push(vehicleType);
+    if (filters.vehicleType) {
+        params.push(filters.vehicleType);
+        query += ` AND vehicle_type = $${params.length}`;
     }
-    if (region) {
-        query += ` AND region = $${paramIndex++}`;
-        params.push(region);
+    if (filters.region) {
+        params.push(filters.region);
+        query += ` AND region = $${params.length}`;
     }
-    
     query += ` GROUP BY status`;
     const { rows } = await db.query(query, params);
     return rows;
+};
+
+export const getDocuments = async (vehicleId) => {
+    const query = `SELECT id, doc_type as "docType", file_path as "filePath", expiry_date as "expiryDate", created_at as "createdAt" FROM vehicle_documents WHERE vehicle_id = $1 ORDER BY created_at DESC`;
+    const { rows } = await db.query(query, [vehicleId]);
+    return rows;
+};
+export const addDocument = async (vehicleId, docType, filePath, expiryDate) => {
+    const query = `INSERT INTO vehicle_documents (vehicle_id, doc_type, file_path, expiry_date) VALUES ($1, $2, $3, $4) RETURNING id, doc_type as "docType", file_path as "filePath", expiry_date as "expiryDate", created_at as "createdAt"`;
+    const { rows } = await db.query(query, [vehicleId, docType, filePath, expiryDate]);
+    return rows[0];
+};
+export const deleteDocument = async (vehicleId, docId) => {
+    const query = `DELETE FROM vehicle_documents WHERE id = $1 AND vehicle_id = $2 RETURNING id`;
+    const { rows } = await db.query(query, [docId, vehicleId]);
+    return rows[0];
 };
 
 export const fleetUtilization = async ({ vehicleType, region } = {}) => {

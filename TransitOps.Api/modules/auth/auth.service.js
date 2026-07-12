@@ -2,7 +2,9 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { env } from '../../config/env.js';
 import * as authModel from './auth.model.js';
-import { ConflictError, BadRequestError, UnauthorizedError, NotFoundError } from '../../utils/errors.js';
+import * as usersModel from '../users/users.model.js';
+import { ROLES } from '../../utils/constants.js';
+import { ConflictError, BadRequestError, UnauthorizedError, NotFoundError, AccountLockedError, ForbiddenError } from '../../utils/errors.js';
 
 const signToken = (user) => {
     return jwt.sign(
@@ -12,7 +14,23 @@ const signToken = (user) => {
     );
 };
 
-export const register = async ({ fullName, email, password, roleName }) => {
+export const register = async ({ fullName, email, password, roleName, user }) => {
+    // 1. Check for Bootstrap vs standard Admin restriction
+    if (roleName === ROLES.ADMIN) {
+        const totalUsers = await usersModel.countTotalUsers();
+        if (totalUsers > 0) {
+            // Not bootstrapping, must be Admin
+            if (!user || user.roleName !== ROLES.ADMIN) {
+                throw new ForbiddenError('Only Admins can register new users.');
+            }
+        }
+        // If totalUsers === 0, we allow it (bootstrap exception)
+    } else {
+        // Standard user creation requires Admin
+        if (!user || user.roleName !== ROLES.ADMIN) {
+            throw new ForbiddenError('Only Admins can register new users.');
+        }
+    }
     const existingUser = await authModel.findUserByEmail(email);
     if (existingUser) {
         throw new ConflictError('Email already registered');
@@ -41,10 +59,24 @@ export const login = async ({ email, password }) => {
         throw new UnauthorizedError('User account is deactivated');
     }
 
+    // Check Lockout
+    if (user.locked_until && new Date(user.locked_until) > new Date()) {
+        throw new AccountLockedError(`Account locked. Try again after ${new Date(user.locked_until).toLocaleTimeString()}`);
+    }
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
+        const attempts = await authModel.incrementFailedLoginAttempts(user.id);
+        if (attempts >= 5) {
+            const lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+            await authModel.lockAccount(user.id, lockUntil);
+            throw new AccountLockedError('Invalid credentials. Account locked after 5 failed attempts.');
+        }
         throw new UnauthorizedError('Invalid email or password');
     }
+
+    // Reset failed login attempts on successful login
+    await authModel.resetFailedLoginAttempts(user.id);
 
     const token = signToken(user);
     

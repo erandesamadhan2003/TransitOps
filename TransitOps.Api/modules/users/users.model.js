@@ -118,3 +118,9 @@ export const countActiveAdmins = async (adminRoleId) => {
     const { rows } = await db.query(query, [adminRoleId]);
     return parseInt(rows[0].count, 10);
 };
+
+export const countTotalUsers = async () => {
+    const query = `SELECT COUNT(*) FROM users`;
+    const { rows } = await db.query(query);
+    return parseInt(rows[0].count, 10);
+};

@@ -77,3 +77,20 @@ export const uploadVehiclePhoto = async (id, file) => {
     
     return { ...vehicle, photoPath: relativePath };
 };
+
+export const getVehicleDocuments = async (vehicleId) => {
+    await getVehicleById(vehicleId);
+    return await vehiclesModel.getDocuments(vehicleId);
+};
+
+export const uploadVehicleDocument = async (vehicleId, file, docType, expiryDate) => {
+    await getVehicleById(vehicleId);
+    const filePath = `/uploads/vehicles/${file.filename}`;
+    return await vehiclesModel.addDocument(vehicleId, docType, filePath, expiryDate);
+};
+
+export const deleteVehicleDocument = async (vehicleId, docId) => {
+    const deleted = await vehiclesModel.deleteDocument(vehicleId, docId);
+    if (!deleted) throw new NotFoundError('Document not found for this vehicle');
+    return deleted;
+};

@@ -9,6 +9,7 @@ import { ROLES } from '../../utils/constants.js';
 
 const router = Router();
 const upload = makeUploader('vehicles');
+const documentUpload = makeUploader('vehicles', true).single('document');
 
 // Fleet access: Admin, Fleet Manager, Dispatcher, Financial Analyst
 router.get('/', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.DISPATCHER, ROLES.FINANCIAL_ANALYST), listVehiclesRules, handleValidation, vehiclesController.list);
@@ -19,5 +20,9 @@ router.put('/:id', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), 
 
 router.patch('/:id/retire', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.retire);
 router.post('/:id/photo', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), upload.single('photo'), vehiclesController.uploadPhoto);
+
+router.get('/:id/documents', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.listDocuments);
+router.post('/:id/documents', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), documentUpload, vehiclesController.uploadDocument);
+router.delete('/:id/documents/:docId', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.deleteDocument);
 
 export default router;

@@ -37,3 +37,32 @@ export const createUser = async ({ fullName, email, passwordHash, roleId }) => {
     const { rows } = await db.query(query, [fullName, email, passwordHash, roleId]);
     return rows[0];
 };
+
+export const incrementFailedLoginAttempts = async (userId) => {
+    const query = `
+        UPDATE users 
+        SET failed_login_attempts = failed_login_attempts + 1 
+        WHERE id = $1
+        RETURNING failed_login_attempts
+    `;
+    const { rows } = await db.query(query, [userId]);
+    return rows[0].failed_login_attempts;
+};
+
+export const lockAccount = async (userId, lockUntil) => {
+    const query = `
+        UPDATE users 
+        SET locked_until = $1 
+        WHERE id = $2
+    `;
+    await db.query(query, [lockUntil, userId]);
+};
+
+export const resetFailedLoginAttempts = async (userId) => {
+    const query = `
+        UPDATE users 
+        SET failed_login_attempts = 0, locked_until = NULL 
+        WHERE id = $1
+    `;
+    await db.query(query, [userId]);
+};

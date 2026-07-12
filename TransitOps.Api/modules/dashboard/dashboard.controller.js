@@ -1,4 +1,5 @@
 import * as dashboardService from './dashboard.service.js';
+import { generateCsv } from '../../utils/csv.js';
 import { success } from '../../utils/response.js';
 
 export const kpis = async (req, res, next) => {
@@ -23,6 +24,14 @@ export const charts = async (req, res, next) => {
 export const analytics = async (req, res, next) => {
     try {
         const result = await dashboardService.getAnalytics();
+        
+        if (req.query.format === 'csv') {
+            const csv = generateCsv(result.vehicles);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename="analytics_summary.csv"');
+            return res.send(csv);
+        }
+
         return success(res, { message: 'Analytics retrieved successfully', data: result });
     } catch (err) {
         next(err);

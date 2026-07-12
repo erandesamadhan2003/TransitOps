@@ -1,10 +1,20 @@
 import * as tripsService from './trips.service.js';
+import { generateCsv } from '../../utils/csv.js';
 import { success, created } from '../../utils/response.js';
 
 export const list = async (req, res, next) => {
     try {
-        const { status, vehicleId, driverId, search, dateFrom, dateTo, page, pageSize } = req.query;
-        const result = await tripsService.listTrips({ status, vehicleId, driverId, search, dateFrom, dateTo, page, pageSize });
+        const { status, vehicleId, driverId, search, dateFrom, dateTo, page, pageSize, format } = req.query;
+        const limit = format === 'csv' ? 10000 : pageSize;
+        const result = await tripsService.listTrips({ status, vehicleId, driverId, search, dateFrom, dateTo, page, pageSize: limit });
+
+        if (format === 'csv') {
+            const csv = generateCsv(result.trips);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename="trips.csv"');
+            return res.send(csv);
+        }
+
         return success(res, { message: 'Trips retrieved successfully', data: result });
     } catch (err) {
         next(err);

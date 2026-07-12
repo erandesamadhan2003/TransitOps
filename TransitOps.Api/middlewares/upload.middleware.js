@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import { env } from '../config/env.js';
 
-export const makeUploader = (destinationFolder) => {
+export const makeUploader = (destinationFolder, allowPdf = false) => {
     const uploadPath = path.join(process.cwd(), env.UPLOAD_DIR, destinationFolder);
     
     // Ensure directory exists
@@ -23,14 +23,21 @@ export const makeUploader = (destinationFolder) => {
     });
 
     const fileFilter = (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|webp/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
+        let allowedExt = /jpeg|jpg|png|webp/;
+        let allowedMime = /image\/(jpeg|jpg|png|webp)/;
+
+        if (allowPdf) {
+            allowedExt = /jpeg|jpg|png|webp|pdf/;
+            allowedMime = /image\/(jpeg|jpg|png|webp)|application\/pdf/;
+        }
+
+        const extname = allowedExt.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedMime.test(file.mimetype);
 
         if (mimetype && extname) {
             return cb(null, true);
         } else {
-            cb(new Error('Only images (jpeg, jpg, png, webp) are allowed'));
+            cb(new Error(allowPdf ? 'Only images (jpeg, jpg, png, webp) and PDF files are allowed' : 'Only images (jpeg, jpg, png, webp) are allowed'));
         }
     };
 

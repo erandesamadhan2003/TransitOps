@@ -8,6 +8,13 @@ export const listUsersRules = [
     query('pageSize').optional().isInt({ min: 1 }).withMessage('pageSize must be a positive integer'),
 ];
 
+export const createUserRules = [
+    body('fullName').trim().notEmpty().withMessage('Full name is required'),
+    body('email').trim().isEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
+    body('roleName').isIn(Object.values(ROLES)).withMessage(`Role must be one of: ${Object.values(ROLES).join(', ')}`)
+];
+
 export const updateUserRules = [
     body('fullName').optional().trim().notEmpty().withMessage('Full name cannot be empty if provided'),
     body('roleName').optional().isIn(Object.values(ROLES)).withMessage(`Role must be one of: ${Object.values(ROLES).join(', ')}`),

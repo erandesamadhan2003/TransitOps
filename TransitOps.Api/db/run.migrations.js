@@ -33,21 +33,7 @@ async function runMigrations() {
         }
         console.log('All migrations executed successfully.');
 
-        // 2. Run Seeds
-        const seedsDir = path.join(__dirname, 'seeds');
-        if (fs.existsSync(seedsDir)) {
-            const seedFiles = fs.readdirSync(seedsDir).sort();
-            console.log('⏳ Running Seeds...');
-            for (const file of seedFiles) {
-                if (file.endsWith('.sql')) {
-                    const filePath = path.join(seedsDir, file);
-                    const sql = fs.readFileSync(filePath, 'utf8');
-                    await client.query(sql);
-                    console.log(`  - Executed seed: ${file}`);
-                }
-            }
-            console.log('All seeds executed successfully.');
-        }
+
 
     } catch (err) {
         console.error('Database operation failed:', err);

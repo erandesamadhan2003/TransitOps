@@ -8,6 +8,7 @@ import maintenanceRoutes from '../modules/maintenance/maintenance.routes.js';
 import fuelRoutes from '../modules/fuel/fuel.routes.js';
 import expensesRoutes from '../modules/expenses/expenses.routes.js';
 import dashboardRoutes from '../modules/dashboard/dashboard.routes.js';
+import settingsRoutes from '../modules/settings/settings.routes.js';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/maintenance', maintenanceRoutes);
 router.use('/fuel-logs', fuelRoutes);
 router.use('/expenses', expensesRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/settings', settingsRoutes);
 
 export default router;

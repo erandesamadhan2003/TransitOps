@@ -1,11 +1,21 @@
 import * as driversService from './drivers.service.js';
+import { generateCsv } from '../../utils/csv.js';
 import { success, created } from '../../utils/response.js';
 import { BadRequestError } from '../../utils/errors.js';
 
 export const list = async (req, res, next) => {
     try {
-        const { status, licenseCategory, search, expiringWithinDays, page, pageSize } = req.query;
-        const result = await driversService.listDrivers({ status, licenseCategory, search, expiringWithinDays, page, pageSize });
+        const { status, licenseCategory, search, expiringWithinDays, page, pageSize, format } = req.query;
+        const limit = format === 'csv' ? 10000 : pageSize;
+        const result = await driversService.listDrivers({ status, licenseCategory, search, expiringWithinDays, page, pageSize: limit });
+
+        if (format === 'csv') {
+            const csv = generateCsv(result.drivers);
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename="drivers.csv"');
+            return res.send(csv);
+        }
+
         return success(res, { message: 'Drivers retrieved successfully', data: result });
     } catch (err) {
         next(err);
@@ -77,3 +87,38 @@ export const uploadPhoto = async (req, res, next) => {
         next(err);
     }
 };
+
+export const listDocuments = async (req, res, next) => {
+    try {
+        const docs = await driversService.getDriverDocuments(req.params.id);
+        return success(res, { message: 'Documents retrieved successfully', data: docs });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const uploadDocument = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            throw new BadRequestError('No document uploaded');
+        }
+        const { docType, expiryDate } = req.body;
+        if (!docType) {
+            throw new BadRequestError('docType is required');
+        }
+        const doc = await driversService.uploadDriverDocument(req.params.id, req.file, docType, expiryDate);
+        return created(res, { message: 'Document uploaded successfully', data: doc });
+    } catch (err) {
+        next(err);
+    }
+};
+
+export const deleteDocument = async (req, res, next) => {
+    try {
+        await driversService.deleteDriverDocument(req.params.id, req.params.docId);
+        return success(res, { message: 'Document deleted successfully' });
+    } catch (err) {
+        next(err);
+    }
+};
+

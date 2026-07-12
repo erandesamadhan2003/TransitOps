@@ -1,13 +1,13 @@
 import bcrypt from 'bcrypt';
 import * as usersModel from './users.model.js';
-import { findRoleByName } from '../auth/auth.model.js';
+import * as authModel from '../auth/auth.model.js';
 import { NotFoundError, BadRequestError, ForbiddenError, ConflictError, UnauthorizedError } from '../../utils/errors.js';
 import { ROLES } from '../../utils/constants.js';
 
 export const listUsers = async ({ roleName, isActive, search, page = 1, pageSize = 20 }) => {
     let roleId = null;
     if (roleName) {
-        const role = await findRoleByName(roleName);
+        const role = await authModel.findRoleByName(roleName);
         if (!role) throw new BadRequestError('Invalid role filter');
         roleId = role.id;
     }
@@ -47,7 +47,7 @@ export const updateUser = async (id, { fullName, roleName, isActive }, requestin
 
     let roleId = undefined;
     if (roleName) {
-        const role = await findRoleByName(roleName);
+        const role = await authModel.findRoleByName(roleName);
         if (!role) throw new BadRequestError('Invalid role specified');
         roleId = role.id;
     }
@@ -61,7 +61,7 @@ export const updateUser = async (id, { fullName, roleName, isActive }, requestin
     if (targetUser.roleName === ROLES.ADMIN) {
         const isRemovingAdmin = (roleName && roleName !== ROLES.ADMIN) || isActive === false;
         if (isRemovingAdmin) {
-            const adminRole = await findRoleByName(ROLES.ADMIN);
+            const adminRole = await authModel.findRoleByName(ROLES.ADMIN);
             const activeAdminsCount = await usersModel.countActiveAdmins(adminRole.id);
             if (activeAdminsCount <= 1) {
                 throw new ConflictError('Cannot remove or deactivate the last active Admin');
@@ -107,4 +107,75 @@ export const deactivateUser = async (id, requestingUser) => {
 
 export const activateUser = async (id) => {
     return updateUser(id, { isActive: true }, { id: -1 }); 
+};
+
+export const createUserByAdmin = async ({ fullName, email, password, roleName }) => {
+    const existingUser = await authModel.findUserByEmail(email);
+    if (existingUser) {
+        throw new ConflictError('Email already registered');
+    }
+
+    const role = await authModel.findRoleByName(roleName);
+    if (!role) {
+        throw new BadRequestError('Invalid role specified');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await authModel.createUser({ fullName, email, passwordHash, roleId: role.id });
+    
+    user.roleName = role.name;
+    return user;
+};
+
+export const bulkImportUsers = async (rows) => {
+    let created = 0;
+    let updated = 0;
+    const errors = [];
+    const validRoles = Object.values(ROLES).map(r => r.toLowerCase());
+
+    for (const row of rows) {
+        try {
+            const { rowNumber, fullName, email, password, roleName } = row;
+            
+            if (!fullName || !email || !roleName) {
+                errors.push({ row: rowNumber, email, reason: 'Missing required fields (Full Name, Email, or Role)' });
+                continue;
+            }
+
+            const lowerRoleName = roleName.toLowerCase();
+            const matchedRole = Object.values(ROLES).find(r => r.toLowerCase() === lowerRoleName);
+            
+            if (!matchedRole) {
+                errors.push({ row: rowNumber, email, reason: `Invalid role: ${roleName}` });
+                continue;
+            }
+
+            const existingUser = await authModel.findUserByEmail(email);
+            
+            if (existingUser) {
+                const roleObj = await authModel.findRoleByName(matchedRole);
+                await usersModel.updateProfile(existingUser.id, { fullName, roleId: roleObj.id, isActive: true });
+                updated++;
+            } else {
+                if (!password || password.length < 8) {
+                    errors.push({ row: rowNumber, email, reason: 'Password is required and must be at least 8 characters long for new users' });
+                    continue;
+                }
+                const roleObj = await authModel.findRoleByName(matchedRole);
+                const passwordHash = await bcrypt.hash(password, 10);
+                await authModel.createUser({ fullName, email, passwordHash, roleId: roleObj.id });
+                created++;
+            }
+        } catch (err) {
+            errors.push({ row: row?.rowNumber, email: row?.email, reason: err.message });
+        }
+    }
+
+    return {
+        totalRows: rows.length,
+        created,
+        updated,
+        skipped: errors.length,
+        errors
+    };
 };

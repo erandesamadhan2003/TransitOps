@@ -166,3 +166,33 @@ export const countByStatus = async () => {
     const { rows } = await db.query(query);
     return rows;
 };
+
+export const findExpiringLicenses = async (days) => {
+    const query = `
+        SELECT id, name, license_number as "licenseNumber", license_expiry as "licenseExpiry", contact_number as "contactNumber"
+        FROM drivers
+        WHERE status != 'Retired' 
+          AND license_expiry <= CURRENT_DATE + $1::int
+          AND license_expiry >= CURRENT_DATE
+    `;
+    const { rows } = await db.query(query, [days]);
+    return rows;
+};
+
+export const getDocuments = async (driverId) => {
+    const query = `SELECT id, doc_type as "docType", file_path as "filePath", expiry_date as "expiryDate", created_at as "createdAt" FROM driver_documents WHERE driver_id = $1 ORDER BY created_at DESC`;
+    const { rows } = await db.query(query, [driverId]);
+    return rows;
+};
+
+export const addDocument = async (driverId, docType, filePath, expiryDate) => {
+    const query = `INSERT INTO driver_documents (driver_id, doc_type, file_path, expiry_date) VALUES ($1, $2, $3, $4) RETURNING id, doc_type as "docType", file_path as "filePath", expiry_date as "expiryDate", created_at as "createdAt"`;
+    const { rows } = await db.query(query, [driverId, docType, filePath, expiryDate]);
+    return rows[0];
+};
+
+export const deleteDocument = async (driverId, docId) => {
+    const query = `DELETE FROM driver_documents WHERE id = $1 AND driver_id = $2 RETURNING id`;
+    const { rows } = await db.query(query, [docId, driverId]);
+    return rows[0];
+};

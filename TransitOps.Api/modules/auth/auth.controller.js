@@ -4,7 +4,7 @@ import { success, created } from '../../utils/response.js';
 export const register = async (req, res, next) => {
     try {
         const { fullName, email, password, roleName } = req.body;
-        const user = await authService.register({ fullName, email, password, roleName });
+        const user = await authService.register({ fullName, email, password, roleName, user: req.user });
         return created(res, { message: 'User registered successfully', data: user });
     } catch (err) {
         next(err);

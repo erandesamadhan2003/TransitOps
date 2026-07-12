@@ -43,3 +43,9 @@ export class ValidationError extends AppError {
         this.errors = errors;
     }
 }
+
+export class AccountLockedError extends AppError {
+    constructor(message) {
+        super(message, 401);
+    }
+}

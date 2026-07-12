@@ -23,7 +23,8 @@ Verifies if the API is running and responding.
 
 ### `POST /api/auth/register`
 Registers a new user and assigns them a system role.
-- **Auth Required**: No
+- **Auth Required**: No (ONLY if the database has zero users, i.e., Bootstrap mode). Otherwise, Yes (`Bearer <token>`).
+- **Roles Allowed**: `Admin` (If not in Bootstrap mode)
 - **Request Body** (`application/json`):
   ```json
   {
@@ -84,6 +85,7 @@ Authenticates a user and returns a JSON Web Token (JWT).
   ```
 - **Error Responses**:
   - `401 Unauthorized`: Invalid email or password, or deactivated account.
+  - `423 Locked`: Account is locked due to 5 consecutive failed login attempts. Wait 15 minutes before trying again.
 
 ### `GET /api/auth/me`
 Retrieves the profile information of the currently authenticated user.
@@ -127,6 +129,32 @@ Lists users with optional filtering and pagination.
   - `page` (number, optional, default: 1)
   - `pageSize` (number, optional, default: 20)
 - **Response (200 OK)**: Returns a list of users and pagination details.
+
+### `GET /api/users/import-template`
+Downloads a CSV template for bulk user imports.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`
+- **Response (200 OK)**: Returns a CSV file stream (`text/csv`).
+
+### `POST /api/users/import`
+Bulk imports users from a CSV file.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`
+- **Request Body** (`multipart/form-data`):
+  - `file`: The CSV file to import.
+- **Response (200 OK)**:
+  ```json
+  {
+    "status": "success",
+    "message": "Bulk import completed",
+    "data": {
+      "total": 5,
+      "success": 3,
+      "failed": 2,
+      "errors": ["Row 2: Email already exists"]
+    }
+  }
+  ```
 
 ### `GET /api/users/:id`
 Retrieves details of a specific user.
@@ -204,7 +232,8 @@ Lists vehicles with optional filtering and pagination.
   - `search` (string, optional)
   - `page` (number, optional, default: 1)
   - `pageSize` (number, optional, default: 20)
-- **Response (200 OK)**: Returns a list of vehicles and pagination details.
+  - `format` (string, optional: `csv`)
+- **Response (200 OK)**: Returns a list of vehicles and pagination details. If `format=csv`, returns a raw CSV file stream (`text/csv`).
 
 ### `GET /api/vehicles/:id`
 Retrieves details of a specific vehicle.
@@ -271,6 +300,28 @@ Uploads a photo for the vehicle.
 - **Error Responses**:
   - `400 Bad Request`: No photo uploaded, or invalid file type.
 
+### `GET /api/vehicles/:id/documents`
+Lists all documents for a specific vehicle.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Response (200 OK)**: Returns a list of documents.
+
+### `POST /api/vehicles/:id/documents`
+Uploads a document (PDF/Image) for a vehicle.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Request Body** (`multipart/form-data`):
+  - `document`: The file (max 5MB, `.pdf`, `.jpg`, `.png`, `.webp`)
+  - `docType`: String describing the document (e.g., 'Insurance')
+  - `expiryDate`: Optional date string
+- **Response (201 Created)**: Returns the newly uploaded document record.
+
+### `DELETE /api/vehicles/:id/documents/:docId`
+Deletes a vehicle document.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Response (200 OK)**: Success message.
+
 ---
 
 ## Drivers (`/api/drivers`)
@@ -286,7 +337,8 @@ Lists drivers with optional filtering and pagination.
   - `search` (string, optional)
   - `page` (number, optional, default: 1)
   - `pageSize` (number, optional, default: 20)
-- **Response (200 OK)**: Returns a list of drivers and pagination details.
+  - `format` (string, optional: `csv`)
+- **Response (200 OK)**: Returns a list of drivers and pagination details. If `format=csv`, returns a raw CSV file stream (`text/csv`).
 
 ### `GET /api/drivers/:id`
 Retrieves details of a specific driver.
@@ -372,6 +424,28 @@ Uploads a photo for the driver.
 - **Error Responses**:
   - `400 Bad Request`: No photo uploaded, or invalid file type.
 
+### `GET /api/drivers/:id/documents`
+Lists all documents for a specific driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`, `Safety Officer`
+- **Response (200 OK)**: Returns a list of documents.
+
+### `POST /api/drivers/:id/documents`
+Uploads a document (PDF/Image) for a driver.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`, `Safety Officer`
+- **Request Body** (`multipart/form-data`):
+  - `document`: The file (max 5MB, `.pdf`, `.jpg`, `.png`, `.webp`)
+  - `docType`: String describing the document (e.g., 'License Scan')
+  - `expiryDate`: Optional date string
+- **Response (201 Created)**: Returns the newly uploaded document record.
+
+### `DELETE /api/drivers/:id/documents/:docId`
+Deletes a driver document.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`, `Safety Officer`
+- **Response (200 OK)**: Success message.
+
 ---
 
 ## Trips (`/api/trips`)
@@ -389,7 +463,8 @@ Lists trips with optional filtering and pagination. Also joins vehicle and drive
   - `search` (string, optional: searches source and destination)
   - `page` (number, optional, default: 1)
   - `pageSize` (number, optional, default: 20)
-- **Response (200 OK)**: Returns a list of trips and pagination details.
+  - `format` (string, optional: `csv`)
+- **Response (200 OK)**: Returns a list of trips and pagination details. If `format=csv`, returns a raw CSV file stream (`text/csv`).
 
 ### `GET /api/trips/:id`
 Retrieves details of a specific trip.
@@ -645,3 +720,35 @@ Retrieves time-series data and distribution metrics for rendering dashboard char
     "vehicleUtilization": [ { "registrationNumber": "TRK-001", "tripCount": 15 } ]
   }
   ```
+
+### `GET /api/dashboard/analytics`
+Retrieves comprehensive analytics including per-vehicle ROI, fleet fuel efficiency, and monthly revenue.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user (Universal Access)
+- **Query Parameters**:
+  - `format` (string, optional: `csv`)
+- **Response (200 OK)**: Returns detailed JSON objects for analytics. If `format=csv`, returns a raw CSV file stream (`text/csv`) of the `vehicles` array inside the analytics payload.
+
+---
+
+## Settings (`/api/settings`)
+
+### `GET /api/settings`
+Retrieves the global depot settings (depot name, currency, distance unit).
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: Any authenticated user
+- **Response (200 OK)**: Returns the settings object.
+
+### `PUT /api/settings`
+Updates the global depot settings.
+- **Auth Required**: Yes (`Bearer <token>`)
+- **Roles Allowed**: `Admin`, `Fleet Manager`
+- **Request Body** (`application/json`):
+  ```json
+  {
+    "depotName": "New Main Depot",
+    "currency": "EUR",
+    "distanceUnit": "mi"
+  }
+  ```
+- **Response (200 OK)**: Returns the updated settings object.

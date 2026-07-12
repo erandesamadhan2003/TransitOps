@@ -129,3 +129,20 @@ export const uploadDriverPhoto = async (id, file) => {
     
     return { ...driver, photoPath: relativePath };
 };
+
+export const getDriverDocuments = async (driverId) => {
+    await getDriverById(driverId);
+    return await driversModel.getDocuments(driverId);
+};
+
+export const uploadDriverDocument = async (driverId, file, docType, expiryDate) => {
+    await getDriverById(driverId);
+    const filePath = `/uploads/drivers/${file.filename}`;
+    return await driversModel.addDocument(driverId, docType, filePath, expiryDate);
+};
+
+export const deleteDriverDocument = async (driverId, docId) => {
+    const deleted = await driversModel.deleteDocument(driverId, docId);
+    if (!deleted) throw new NotFoundError('Document not found for this driver');
+    return deleted;
+};
