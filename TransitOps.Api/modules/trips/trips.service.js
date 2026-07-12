@@ -93,20 +93,21 @@ export const completeTrip = async (id, data) => {
     const vehicle = await vehiclesModel.findById(trip.vehicleId);
     if (!vehicle) throw new NotFoundError('Vehicle not found');
 
-    if (parseFloat(data.finalOdometer) < parseFloat(vehicle.odometer)) {
-        throw new BadRequestError('Final odometer cannot be less than the vehicle\'s current odometer reading');
-    }
-
-    const actualDistance = parseFloat(data.finalOdometer) - parseFloat(vehicle.odometer);
+    const actualDistance = parseFloat(data.actualDistance);
+    const finalOdometer = parseFloat(vehicle.odometer) + actualDistance;
 
     return await withTransaction(async (client) => {
         // In case maintenance locked the vehicle while on trip, completing trip will unlock it.
         // We'll enforce that maintenance can't be opened on 'On Trip' vehicles in the maintenance module.
         await vehiclesModel.updateStatus(trip.vehicleId, 'Available', client);
-        await vehiclesModel.updateOdometer(trip.vehicleId, data.finalOdometer, client);
+        await vehiclesModel.updateOdometer(trip.vehicleId, finalOdometer, client);
         await driversModel.updateStatus(trip.driverId, 'Available', client);
         
-        await tripsModel.updateCompletionDetails(id, { actualDistance, fuelConsumed: data.fuelConsumed }, client);
+        await tripsModel.updateCompletionDetails(id, { 
+            actualDistance, 
+            fuelConsumed: data.fuelConsumed,
+            revenue: data.revenue
+        }, client);
         await tripsModel.updateStatus(id, 'Completed', 'completed_at', client);
 
         return await tripsModel.findById(id, client);
