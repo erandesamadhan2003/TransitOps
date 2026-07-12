@@ -43,18 +43,15 @@ bun dev                       # starts on http://localhost:5173
 | Module             | Implemented Features |
 |--------------------|----------------------|
 | **Auth**           | JWT login, bcrypt passwords, rate limiting (5 attempts / 15 min lockout), RBAC route guards |
-| **Dashboard**      | Live KPI cards (vehicles, trips, drivers), vehicle status breakdown chart, recent trips list, type/status/region filters |
-| **Fleet**          | Vehicle CRUD, status tracking (Available/On Trip/In Shop/Retired), odometer auto-update on trip completion |
-| **Drivers**        | Driver CRUD, 4-state status toggle (Available ↔ Off Duty, Suspend ↔ Reinstate), safety scores, license expiry alerts |
-| **Trips**          | Draft → Dispatch → Complete/Cancel lifecycle, available-only vehicle+driver dropdowns, actual distance & fuel on completion |
-| **Maintenance**    | Log vehicle issues (marks vehicle In Shop), close records, cost tracking |
-| **Fuel & Expenses**| Fuel logs + general expense tracking per vehicle |
-| **Analytics**      | Fleet utilization, revenue, trip volume, fuel cost trends (Recharts) |
-| **Settings**       | Depot name, currency, distance unit; read-only RBAC matrix |
-| **User Management**| Full CRUD, role assignment, bulk Excel import (`/users/import`), Excel template download |
-| **Documents**      | Upload insurance/RC/permit/license scans (vehicle & driver), expiry badges |
-| **Dark Mode**      | Toggle persisted in `localStorage`, full CSS variable overrides |
-| **Mobile**         | Responsive mobile drawer sidebar, hamburger navigation |
+| **Dashboard**      | Live KPI cards, vehicle status breakdown chart, recent trips list, dynamic frontend filtering |
+| **Fleet**          | Vehicle CRUD, status tracking (Pending → Available → On Trip → In Shop), odometer auto-update |
+| **Drivers**        | Driver CRUD, status tracking, automated background license expiry alerts (via Node-Cron) |
+| **Trips**          | Transactional DB dispatching, available-only dropdowns, actual distance & fuel calculation |
+| **Maintenance**    | Automated vehicle status syncing (In Shop), close records, repair cost tracking |
+| **Compliance**     | Upload & verify documents (insurance, licenses). Unverified assets cannot be dispatched. |
+| **Analytics**      | 6-month visual trends for utilization, revenue, and fuel costs. 1-click **PDF & CSV Exports**. |
+| **Settings**       | Depot configuration, currency, distance unit settings; read-only RBAC matrix |
+| **Users**          | Full CRUD, role assignment, bulk Excel import (`/users/import`), Excel template download |
 
 ---
 
@@ -80,11 +77,3 @@ Route-level guards (`RequirePermission`) redirect unauthorized access to `/dashb
 | **Web** | React 19 · Vite · TanStack Query · TanStack Table · React Router v7 · Zod · Recharts · Tailwind v4 |
 
 ---
-
-## Intentional Deviations from the Wireframes
-
-### Login — Role dropdown removed
-The mockup included a "Role" dropdown. This was removed. Role is a server-side attribute — clients must not self-declare their role at login time. Use the seed accounts above to switch personas.
-
-### Forgot Password
-The UI flow is complete but the backend email-sending step is not yet wired (requires SMTP configuration). The button is wired, the screen is not a dead link.
