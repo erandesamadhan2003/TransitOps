@@ -113,3 +113,16 @@ export const deleteDocument = async (req, res, next) => {
     }
 };
 
+export const verifyDocument = async (req, res, next) => {
+    try {
+        const { isVerified } = req.body;
+        if (typeof isVerified !== 'boolean') {
+            throw new BadRequestError('isVerified must be a boolean');
+        }
+        const doc = await vehiclesService.verifyDocument(req.params.id, req.params.docId, isVerified);
+        return success(res, { message: 'Document verification updated successfully', data: doc });
+    } catch (err) {
+        next(err);
+    }
+};
+

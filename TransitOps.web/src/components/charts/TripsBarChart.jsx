@@ -41,7 +41,7 @@ export function TripsBarChart({ data = [], height = 200 }) {
           content={<ChartTooltip />}
           cursor={{ fill: "rgba(37,99,168,0.06)" }}
         />
-        <Bar dataKey="count" fill="#2563a8" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="count" fill="rgba(37,99,168,0.7)" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

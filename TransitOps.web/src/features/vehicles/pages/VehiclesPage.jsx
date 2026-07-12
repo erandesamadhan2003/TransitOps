@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Truck, FileText, CheckCircle } from "lucide-react";
+import { Plus, Pencil, Trash2, Truck, FileText, CheckCircle, Download } from "lucide-react";
 import { Card, StatusBadge } from "@/components/ui";
 import { Button, Table, ConfirmDialog, DocumentsModal } from "@/components/common";
-import { useVehicles, useDeleteVehicle, useVehicleDocuments, useUploadVehicleDocument, useDeleteVehicleDocument, useVerifyVehicle } from "../hooks";
+import { useVehicles, useDeleteVehicle, useVehicleDocuments, useUploadVehicleDocument, useDeleteVehicleDocument, useVerifyVehicle, useVerifyVehicleDocument } from "../hooks";
 import { VehicleFilters } from "../components/VehicleFilters";
 import { VehicleFormModal } from "../components/VehicleFormModal";
+import { vehiclesApi } from "../api";
 import { useDebounce } from "@/hooks";
 import { formatCurrency, formatNumber } from "@/utils/format";
 import { permissionService } from "@/services/permission.service";
@@ -31,6 +32,7 @@ export default function VehiclesPage() {
   const { data: vehicleDocs, isLoading: docsLoading } = useVehicleDocuments(documentVehicle?.id);
   const uploadDoc = useUploadVehicleDocument();
   const deleteDoc = useDeleteVehicleDocument();
+  const verifyDoc = useVerifyVehicleDocument();
 
   function openCreate() {
     setEditingVehicle(null);
@@ -137,6 +139,22 @@ export default function VehiclesPage() {
     [canEdit],
   );
 
+  const handleExport = async () => {
+    try {
+      const blob = await vehiclesApi.exportCsv({ ...filters, search: debouncedSearch });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `vehicles_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
+
   return (
     <div className="animate-fade-up space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -150,6 +168,9 @@ export default function VehiclesPage() {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <VehicleFilters filters={filters} onChange={(f) => { setFilters(f); setPage(1); }} />
+          <Button variant="outline" icon={<Download size={16} />} onClick={handleExport}>
+            Export
+          </Button>
           {canEdit && (
             <Button icon={<Plus size={16} />} onClick={openCreate}>
               Add Vehicle
@@ -206,6 +227,7 @@ export default function VehiclesPage() {
         isLoading={docsLoading}
         onUpload={uploadDoc.mutateAsync}
         onDelete={deleteDoc.mutateAsync}
+        onVerify={verifyDoc.mutateAsync}
       />
 
       <ConfirmDialog

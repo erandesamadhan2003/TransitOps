@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Truck,
   CheckCircle2,
@@ -27,20 +27,32 @@ export default function DashboardPage() {
     region: filters.region 
   });
 
-  const tripsChartData = (charts?.tripsPerMonth || []).map(item => ({
-    month: new Date(item.month).getMonth() + 1,
-    count: item.count
-  }));
+  const last6Months = useMemo(() => {
+    const months = [];
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - 5);
+    for (let i = 0; i < 6; i++) {
+      months.push(d.getMonth() + 1);
+      d.setMonth(d.getMonth() + 1);
+    }
+    return months;
+  }, []);
 
-  const fuelChartData = (charts?.fuelCostPerMonth || []).map(item => ({
-    month: new Date(item.month).getMonth() + 1,
-    cost: parseFloat(item.totalCost)
-  }));
+  const tripsChartData = useMemo(() => last6Months.map(m => {
+    const found = (charts?.tripsPerMonth || []).find(item => new Date(item.month).getMonth() + 1 === m);
+    return { month: m, count: found ? parseInt(found.count, 10) : 0 };
+  }), [charts, last6Months]);
 
-  const maintenanceChartData = (charts?.maintenanceCostPerMonth || []).map(item => ({
-    month: new Date(item.month).getMonth() + 1,
-    cost: parseFloat(item.totalCost)
-  }));
+  const fuelChartData = useMemo(() => last6Months.map(m => {
+    const found = (charts?.fuelCostPerMonth || []).find(item => new Date(item.month).getMonth() + 1 === m);
+    return { month: m, cost: found ? parseFloat(found.totalCost) : 0 };
+  }), [charts, last6Months]);
+
+  const maintenanceChartData = useMemo(() => last6Months.map(m => {
+    const found = (charts?.maintenanceCostPerMonth || []).find(item => new Date(item.month).getMonth() + 1 === m);
+    return { month: m, cost: found ? parseFloat(found.totalCost) : 0 };
+  }), [charts, last6Months]);
 
   return (
     <div className="animate-fade-up space-y-6">
@@ -116,16 +128,26 @@ export default function DashboardPage() {
                 <RecentTripsList trips={tripsData?.trips || []} />
               </Card>
 
-              <Card>
+              <Card className="flex flex-col">
                 <CardHeader title="Vehicle Utilization" />
-                <StatusBreakdownBars 
-                  data={{
-                    available: kpis.availableVehicles,
-                    on_trip: kpis.activeVehicles,
-                    in_shop: kpis.vehiclesInShop,
-                    retired: kpis.retiredVehicles,
-                  }} 
-                />
+                <div className="flex-1 flex flex-col justify-center pb-4 px-2">
+                  <div className="mb-8 flex items-baseline gap-2 border-b border-border/50 pb-4">
+                    <span className="text-4xl font-bold tracking-tight text-text-primary">
+                      {kpis.fleetUtilizationPercent ?? 0}%
+                    </span>
+                    <span className="text-sm font-medium text-text-secondary">
+                      Active Fleet
+                    </span>
+                  </div>
+                  <StatusBreakdownBars 
+                    className="space-y-6"
+                    data={{
+                      available: kpis.availableVehicles,
+                      on_trip: kpis.activeVehicles,
+                      in_shop: kpis.vehiclesInShop,
+                    }} 
+                  />
+                </div>
               </Card>
             </div>
           )}

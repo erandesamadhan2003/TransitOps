@@ -185,3 +185,24 @@ export const deleteDriverDocument = async (driverId, docId) => {
     if (!deleted) throw new NotFoundError('Document not found for this driver');
     return deleted;
 };
+
+export const verifyDocument = async (driverId, docId, isVerified) => {
+    const driver = await getDriverById(driverId);
+    
+    const updatedDoc = await driversModel.updateDocumentVerification(driverId, docId, isVerified);
+    if (!updatedDoc) throw new NotFoundError('Document not found');
+
+    const { hasDocuments, allVerified } = await driversModel.isAllDocumentsVerified(driverId);
+
+    if (hasDocuments && allVerified) {
+        if (driver.status === 'Pending') {
+            await driversModel.updateStatus(driverId, 'Available');
+        }
+    } else {
+        if (driver.status === 'Available') {
+            await driversModel.updateStatus(driverId, 'Pending');
+        }
+    }
+
+    return updatedDoc;
+};

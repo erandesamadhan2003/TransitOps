@@ -21,7 +21,7 @@ export function RecentTripsList({ trips = [] }) {
             <th className="py-2 pr-3 font-semibold">Vehicle</th>
             <th className="py-2 pr-3 font-semibold">Driver</th>
             <th className="py-2 pr-3 font-semibold">Status</th>
-            <th className="py-2 pr-0 text-right font-semibold">ETA</th>
+            <th className="py-2 pr-0 text-right font-semibold">Distance</th>
           </tr>
         </thead>
         <tbody>
@@ -31,19 +31,19 @@ export function RecentTripsList({ trips = [] }) {
               className="border-b border-border/60 last:border-0"
             >
               <td className="py-2.5 pr-3 font-mono text-xs text-text-primary">
-                {trip.code}
+                TRP-{trip.id?.toString().padStart(4, '0')}
               </td>
               <td className="py-2.5 pr-3 text-text-primary">
-                {trip.vehicleName}
+                {trip.vehicleName || trip.vehicle_name}
               </td>
               <td className="py-2.5 pr-3 text-text-primary">
-                {trip.driverName}
+                {trip.driverName || trip.driver_name}
               </td>
               <td className="py-2.5 pr-3">
                 <StatusBadge status={trip.status} />
               </td>
               <td className="py-2.5 pr-0 text-right text-text-secondary">
-                {trip.etaMinutes ? `${trip.etaMinutes} min` : "—"}
+                {trip.plannedDistance || trip.planned_distance ? `${trip.plannedDistance || trip.planned_distance} km` : "—"}
               </td>
             </tr>
           ))}

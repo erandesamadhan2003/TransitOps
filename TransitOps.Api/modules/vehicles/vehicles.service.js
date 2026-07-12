@@ -106,3 +106,24 @@ export const deleteVehicleDocument = async (vehicleId, docId) => {
     if (!deleted) throw new NotFoundError('Document not found for this vehicle');
     return deleted;
 };
+
+export const verifyDocument = async (vehicleId, docId, isVerified) => {
+    const vehicle = await getVehicleById(vehicleId);
+    
+    const updatedDoc = await vehiclesModel.updateDocumentVerification(vehicleId, docId, isVerified);
+    if (!updatedDoc) throw new NotFoundError('Document not found');
+
+    const { hasDocuments, allVerified } = await vehiclesModel.isAllDocumentsVerified(vehicleId);
+
+    if (hasDocuments && allVerified) {
+        if (vehicle.status === 'Pending') {
+            await vehiclesModel.updateStatus(vehicleId, 'Available');
+        }
+    } else {
+        if (vehicle.status === 'Available') {
+            await vehiclesModel.updateStatus(vehicleId, 'Pending');
+        }
+    }
+
+    return updatedDoc;
+};

@@ -24,6 +24,7 @@ router.post('/:id/photo', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MAN
 
 router.get('/:id/documents', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.listDocuments);
 router.post('/:id/documents', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), documentUpload, vehiclesController.uploadDocument);
+router.patch('/:id/documents/:docId/verify', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.verifyDocument);
 router.delete('/:id/documents/:docId', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER), vehiclesController.deleteDocument);
 
 export default router;

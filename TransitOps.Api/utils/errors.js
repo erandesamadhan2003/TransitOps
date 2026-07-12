@@ -45,7 +45,8 @@ export class ValidationError extends AppError {
 }
 
 export class AccountLockedError extends AppError {
-    constructor(message) {
-        super(message, 401);
+    constructor(message, retryAfterSeconds) {
+        super(message, 423);
+        this.retryAfterSeconds = retryAfterSeconds;
     }
 }

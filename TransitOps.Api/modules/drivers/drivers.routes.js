@@ -31,6 +31,7 @@ router.patch('/:id/wake', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MAN
 // Documents
 router.get('/:id/documents', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.SAFETY_OFFICER), driversController.listDocuments);
 router.post('/:id/documents', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.SAFETY_OFFICER), documentUpload, driversController.uploadDocument);
+router.patch('/:id/documents/:docId/verify', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.SAFETY_OFFICER), driversController.verifyDocument);
 router.delete('/:id/documents/:docId', authenticate, requireRole(ROLES.ADMIN, ROLES.FLEET_MANAGER, ROLES.SAFETY_OFFICER), driversController.deleteDocument);
 
 export default router;

@@ -5,7 +5,8 @@ export const errorHandler = (err, req, res, next) => {
         return error(res, {
             message: err.message,
             statusCode: err.statusCode,
-            errors: err.errors
+            errors: err.errors,
+            retryAfterSeconds: err.retryAfterSeconds
         });
     }
 

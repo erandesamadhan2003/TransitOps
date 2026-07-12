@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, FileText, Trash2, Download, Upload } from "lucide-react";
+import { X, FileText, Trash2, Download, Upload, CheckCircle } from "lucide-react";
 import { Button, Modal, Input } from "@/components/common";
 
 export function DocumentsModal({
@@ -12,6 +12,7 @@ export function DocumentsModal({
   isLoading,
   onUpload,
   onDelete,
+  onVerify,
 }) {
   const [file, setFile] = useState(null);
   const [docType, setDocType] = useState("");
@@ -164,6 +165,9 @@ export function DocumentsModal({
                             {isExpired && " (Expired)"}
                           </p>
                         )}
+                        <span className={`text-[11px] px-1.5 py-0.5 rounded-sm font-medium ${doc.isVerified ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                          {doc.isVerified ? 'Verified' : 'Pending'}
+                        </span>
                       </div>
                     </a>
                     <div className="flex items-center gap-2">
@@ -177,13 +181,24 @@ export function DocumentsModal({
                         <Download size={18} />
                       </a>
                       {canEdit && (
-                        <button
-                          onClick={() => onDelete({ id: entityId, docId: doc.id })}
-                          className="rounded p-2 text-text-secondary hover:bg-red-50 hover:text-red-600"
-                          title="Delete Document"
-                        >
-                          <Trash2 size={18} />
-                        </button>
+                        <>
+                          {onVerify && (
+                            <button
+                              onClick={() => onVerify({ id: entityId, docId: doc.id, isVerified: !doc.isVerified })}
+                              className={`rounded p-2 text-text-secondary hover:text-text-primary ${doc.isVerified ? 'hover:bg-amber-50' : 'hover:bg-green-50'}`}
+                              title={doc.isVerified ? "Unverify Document" : "Verify Document"}
+                            >
+                              {doc.isVerified ? <X size={18} /> : <CheckCircle size={18} />}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => onDelete({ id: entityId, docId: doc.id })}
+                            className="rounded p-2 text-text-secondary hover:bg-red-50 hover:text-red-600"
+                            title="Delete Document"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>

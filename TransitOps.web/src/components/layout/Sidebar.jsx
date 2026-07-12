@@ -15,41 +15,54 @@ export function Sidebar({
   onToggleExpand,
 }) {
 
-  const navLinks = (
-    <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto scroll-none">
-      {nav.map((item) => (
-        <NavLink
-          key={item.path}
-          to={item.path}
-          end={item.path === "/"}
-          onClick={onMobileClose}
-          className={({ isActive }) =>
-            cn(
-              "relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200",
-              "border text-[13px] font-medium",
-              isActive
-                ? "text-ink-600 bg-white/80 border-border/60 shadow-[0_4px_12px_rgba(37,99,168,0.06)]"
-                : "text-[#4A6278] bg-transparent border-transparent hover:bg-ink-50/70",
-            )
-          }
-        >
-          {({ isActive }) => (
-            <>
-              {isActive && (
-                <span
-                  className="absolute left-0 inset-y-2 w-[3px] rounded-r bg-ink-500"
-                  aria-hidden="true"
-                />
-              )}
-              <span className="shrink-0 ml-0.5">{item.icon}</span>
-              <span className="whitespace-nowrap overflow-hidden">
-                {item.label}
-              </span>
-            </>
+  const mainNav = nav.filter(item => item.label !== "Settings" && item.label !== "Users");
+  const bottomNav = nav.filter(item => item.label === "Settings" || item.label === "Users");
+
+  const NavItem = ({ item, isMobile }) => (
+    <NavLink
+      to={item.path}
+      end={item.path === "/"}
+      onClick={isMobile ? onMobileClose : undefined}
+      className={({ isActive }) =>
+        cn(
+          "relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200",
+          "border text-[13px] font-medium",
+          isActive
+            ? "text-ink-600 bg-white/80 border-border/60 shadow-[0_4px_12px_rgba(37,99,168,0.06)]"
+            : "text-[#4A6278] bg-transparent border-transparent hover:bg-ink-50/70",
+        )
+      }
+    >
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span
+              className="absolute left-0 inset-y-2 w-[3px] rounded-r bg-ink-500"
+              aria-hidden="true"
+            />
           )}
-        </NavLink>
-      ))}
-    </nav>
+          <span className="shrink-0 ml-0.5">{item.icon}</span>
+          {(!expanded && !isMobile) ? null : (
+            <span className="whitespace-nowrap overflow-hidden">
+              {item.label}
+            </span>
+          )}
+        </>
+      )}
+    </NavLink>
+  );
+
+  const navLinks = (
+    <>
+      <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto scroll-none">
+        {mainNav.map((item) => <NavItem key={item.path} item={item} isMobile={true} />)}
+      </nav>
+      {bottomNav.length > 0 && (
+        <nav className="px-3 py-2 space-y-0.5 shrink-0 border-t border-border/50">
+          {bottomNav.map((item) => <NavItem key={item.path} item={item} isMobile={true} />)}
+        </nav>
+      )}
+    </>
   );
 
   const userBlock = user && (
@@ -139,40 +152,13 @@ export function Sidebar({
         </div>
 
         <nav className="flex-1 px-3 py-2 space-y-0.5 overflow-y-auto scroll-none">
-          {nav.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.path === "/"}
-              className={({ isActive }) =>
-                cn(
-                  "relative flex items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200",
-                  "border text-[13px] font-medium",
-                  isActive
-                    ? "text-ink-600 bg-white/80 border-border/60 shadow-[0_4px_12px_rgba(37,99,168,0.06)]"
-                    : "text-[#4A6278] bg-transparent border-transparent hover:bg-ink-50/70",
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && (
-                    <span
-                      className="absolute left-0 inset-y-2 w-[3px] rounded-r bg-ink-500"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <span className="shrink-0 ml-0.5">{item.icon}</span>
-                  {expanded && (
-                    <span className="whitespace-nowrap overflow-hidden">
-                      {item.label}
-                    </span>
-                  )}
-                </>
-              )}
-            </NavLink>
-          ))}
+          {mainNav.map((item) => <NavItem key={item.path} item={item} isMobile={false} />)}
         </nav>
+        {bottomNav.length > 0 && (
+          <nav className="px-3 py-2 space-y-0.5 shrink-0 border-t border-border/50">
+            {bottomNav.map((item) => <NavItem key={item.path} item={item} isMobile={false} />)}
+          </nav>
+        )}
 
         {user && (
           <div className="px-3 py-4 shrink-0">

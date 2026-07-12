@@ -119,3 +119,17 @@ export function useDeleteVehicleDocument() {
     onError: (err) => toast.error(err.message || "Could not delete document."),
   });
 }
+
+export function useVerifyVehicleDocument() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: vehiclesApi.verifyDocument,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["vehicles", variables.id, "documents"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      toast.success(variables.isVerified ? "Document verified." : "Document unverified.");
+    },
+    onError: (err) => toast.error(err.message || "Could not update document verification."),
+  });
+}

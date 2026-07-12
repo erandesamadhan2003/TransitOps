@@ -5,6 +5,9 @@ export const driversApi = {
   getAll: (params) =>
     api.get(ENDPOINTS.DRIVERS.LIST, { params }).then((r) => r.data.data || r.data),
 
+  exportCsv: (params) =>
+    api.get(ENDPOINTS.DRIVERS.LIST, { params: { ...params, format: "csv" }, responseType: "blob" }).then((r) => r.data),
+
   getDispatchable: () =>
     api.get(ENDPOINTS.DRIVERS.LIST, { params: { status: 'Available' } }).then((r) => r.data.data || r.data),
 
@@ -41,4 +44,7 @@ export const driversApi = {
 
   deleteDocument: ({ id, docId }) =>
     api.delete(`${ENDPOINTS.DRIVERS.LIST}/${id}/documents/${docId}`).then((r) => r.data),
+
+  verifyDocument: ({ id, docId, isVerified }) =>
+    api.patch(`${ENDPOINTS.DRIVERS.LIST}/${id}/documents/${docId}/verify`, { isVerified }).then((r) => r.data.data),
 };

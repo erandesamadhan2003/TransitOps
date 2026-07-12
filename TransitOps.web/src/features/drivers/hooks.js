@@ -154,3 +154,17 @@ export function useDeleteDriverDocument() {
     onError: (err) => toast.error(err.message || "Could not delete document."),
   });
 }
+
+export function useVerifyDriverDocument() {
+  const queryClient = useQueryClient();
+  const toast = useToast();
+  return useMutation({
+    mutationFn: driversApi.verifyDocument,
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["drivers", variables.id, "documents"] });
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+      toast.success(variables.isVerified ? "Document verified." : "Document unverified.");
+    },
+    onError: (err) => toast.error(err.message || "Could not update document verification."),
+  });
+}

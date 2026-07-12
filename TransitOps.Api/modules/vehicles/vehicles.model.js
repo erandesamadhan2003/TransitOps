@@ -198,12 +198,12 @@ export const countByStatus = async (filters = {}) => {
 };
 
 export const getDocuments = async (vehicleId) => {
-    const query = `SELECT id, doc_type as "docType", file_path as "filePath", expiry_date as "expiryDate", created_at as "createdAt" FROM vehicle_documents WHERE vehicle_id = $1 ORDER BY created_at DESC`;
+    const query = `SELECT id, doc_type as "docType", file_path as "filePath", expiry_date as "expiryDate", is_verified as "isVerified", created_at as "createdAt" FROM vehicle_documents WHERE vehicle_id = $1 ORDER BY created_at DESC`;
     const { rows } = await db.query(query, [vehicleId]);
     return rows;
 };
 export const addDocument = async (vehicleId, docType, filePath, expiryDate) => {
-    const query = `INSERT INTO vehicle_documents (vehicle_id, doc_type, file_path, expiry_date) VALUES ($1, $2, $3, $4) RETURNING id, doc_type as "docType", file_path as "filePath", expiry_date as "expiryDate", created_at as "createdAt"`;
+    const query = `INSERT INTO vehicle_documents (vehicle_id, doc_type, file_path, expiry_date) VALUES ($1, $2, $3, $4) RETURNING id, doc_type as "docType", file_path as "filePath", expiry_date as "expiryDate", is_verified as "isVerified", created_at as "createdAt"`;
     const { rows } = await db.query(query, [vehicleId, docType, filePath, expiryDate]);
     return rows[0];
 };
@@ -211,6 +211,29 @@ export const deleteDocument = async (vehicleId, docId) => {
     const query = `DELETE FROM vehicle_documents WHERE id = $1 AND vehicle_id = $2 RETURNING id`;
     const { rows } = await db.query(query, [docId, vehicleId]);
     return rows[0];
+};
+
+export const updateDocumentVerification = async (vehicleId, docId, isVerified) => {
+    const query = `UPDATE vehicle_documents SET is_verified = $1 WHERE id = $2 AND vehicle_id = $3 RETURNING id, is_verified as "isVerified"`;
+    const { rows } = await db.query(query, [isVerified, docId, vehicleId]);
+    return rows[0];
+};
+
+export const isAllDocumentsVerified = async (vehicleId) => {
+    const query = `
+        SELECT 
+            COUNT(*) as total_docs,
+            COUNT(*) FILTER (WHERE is_verified = true) as verified_docs
+        FROM vehicle_documents
+        WHERE vehicle_id = $1
+    `;
+    const { rows } = await db.query(query, [vehicleId]);
+    const total = parseInt(rows[0].total_docs, 10);
+    const verified = parseInt(rows[0].verified_docs, 10);
+    return {
+        hasDocuments: total > 0,
+        allVerified: total > 0 && total === verified
+    };
 };
 
 export const fleetUtilization = async (filters = {}) => {
