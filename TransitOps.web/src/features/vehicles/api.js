@@ -5,6 +5,9 @@ export const vehiclesApi = {
   getAll: (params) =>
     api.get(ENDPOINTS.VEHICLES.LIST, { params }).then((r) => r.data.data || r.data),
 
+  exportCsv: (params) =>
+    api.get(ENDPOINTS.VEHICLES.LIST, { params: { ...params, format: "csv" }, responseType: "blob" }).then((r) => r.data),
+
   getDispatchable: () =>
     api.get(ENDPOINTS.VEHICLES.LIST, { params: { status: 'Available' } }).then((r) => r.data.data || r.data),
 

@@ -5,6 +5,9 @@ export const tripsApi = {
   getAll: (params) =>
     api.get(ENDPOINTS.TRIPS.LIST, { params }).then((r) => r.data.data || r.data),
 
+  exportCsv: (params) =>
+    api.get(ENDPOINTS.TRIPS.LIST, { params: { ...params, format: "csv" }, responseType: "blob" }).then((r) => r.data),
+
   getById: (id) =>
     api.get(ENDPOINTS.TRIPS.DETAIL(id)).then((r) => r.data.data || r.data),
 

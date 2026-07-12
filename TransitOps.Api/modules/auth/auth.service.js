@@ -61,7 +61,8 @@ export const login = async ({ email, password }) => {
 
     // Check Lockout
     if (user.locked_until && new Date(user.locked_until) > new Date()) {
-        throw new AccountLockedError(`Account locked. Try again after ${new Date(user.locked_until).toLocaleTimeString()}`);
+        const retryAfterSeconds = Math.ceil((new Date(user.locked_until).getTime() - Date.now()) / 1000);
+        throw new AccountLockedError(`Account locked. Try again after ${new Date(user.locked_until).toLocaleTimeString()}`, retryAfterSeconds);
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -70,7 +71,7 @@ export const login = async ({ email, password }) => {
         if (attempts >= 5) {
             const lockUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
             await authModel.lockAccount(user.id, lockUntil);
-            throw new AccountLockedError('Invalid credentials. Account locked after 5 failed attempts.');
+            throw new AccountLockedError('Invalid credentials. Account locked after 5 failed attempts.', 15 * 60);
         }
         throw new UnauthorizedError('Invalid email or password');
     }

@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   MoonStar,
   Sun,
+  Download,
 } from "lucide-react";
 import { Card, StatusBadge } from "@/components/ui";
 import { Button, Table, ConfirmDialog } from "@/components/common";
@@ -21,6 +22,7 @@ import {
   useWakeDriver,
 } from "../hooks";
 import { DriverFormModal } from "../components/DriverFormModal";
+import { driversApi } from "../api";
 import { useDebounce } from "@/hooks";
 import { permissionService } from "@/services/permission.service";
 import { DRIVER_STATUS, DRIVER_STATUS_LABELS } from "@/constants/app";
@@ -233,6 +235,22 @@ export default function DriversPage() {
 
   const meta = pendingAction && ACTION_META[pendingAction.type];
 
+  const handleExport = async () => {
+    try {
+      const blob = await driversApi.exportCsv({ ...filters, search: debouncedSearch });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `drivers_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
+
   return (
     <div className="animate-fade-up space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -276,6 +294,9 @@ export default function DriversPage() {
               className="h-10 w-full rounded-lg border border-border-strong bg-white pl-9 pr-3 text-sm focus:border-ink-500 focus:outline-none"
             />
           </div>
+          <Button variant="outline" icon={<Download size={16} />} onClick={handleExport}>
+            Export
+          </Button>
           {canEdit && (
             <Button icon={<Plus size={16} />} onClick={openCreate}>
               Add Driver

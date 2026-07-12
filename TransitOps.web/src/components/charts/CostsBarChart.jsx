@@ -40,9 +40,9 @@ export function CostsBarChart({ data = [], height = 200 }) {
         />
         <Tooltip
           content={<ChartTooltip />}
-          cursor={{ fill: "rgba(179,36,31,0.06)" }}
+          cursor={{ fill: "rgba(51,65,85,0.06)" }}
         />
-        <Bar dataKey="cost" fill="#B3241F" radius={[6, 6, 0, 0]} />
+        <Bar dataKey="cost" fill="rgba(51,65,85,0.7)" radius={[6, 6, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

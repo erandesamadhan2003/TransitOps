@@ -17,10 +17,10 @@ export function StatusBreakdownBars({ data = {}, className }) {
         const meta = STATUS_META[key] ?? { label: key, color: "#2563a8" };
         return (
           <div key={key} className="flex items-center gap-3">
-            <span className="w-20 shrink-0 text-xs text-text-secondary">
+            <span className="w-20 shrink-0 text-sm text-text-secondary">
               {meta.label}
             </span>
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink-50">
+            <div className="h-4 flex-1 overflow-hidden rounded-full bg-ink-50">
               <div
                 className="h-full rounded-full transition-all"
                 style={{

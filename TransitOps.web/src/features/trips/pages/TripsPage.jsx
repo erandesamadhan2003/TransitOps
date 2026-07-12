@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Route } from "lucide-react";
+import { Plus, Route, Download } from "lucide-react";
 import { Card, StatusBadge } from "@/components/ui";
 import { Button, Table, ConfirmDialog, Modal, Input } from "@/components/common";
 import { Select } from "@/components/forms";
@@ -11,6 +11,7 @@ import {
   useCancelTrip,
   useCompleteTrip,
 } from "../hooks";
+import { tripsApi } from "../api";
 import { TripFormModal } from "../components/TripFormModal";
 import { permissionService } from "@/services/permission.service";
 import { TRIP_STATUS, TRIP_STATUS_LABELS } from "@/constants/app";
@@ -168,6 +169,22 @@ export default function TripsPage() {
     [canEdit],
   );
 
+  const handleExport = async () => {
+    try {
+      const blob = await tripsApi.exportCsv(filters);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `trips_export_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Export failed", err);
+    }
+  };
+
   return (
     <div className="animate-fade-up space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -192,6 +209,9 @@ export default function TripsPage() {
             )}
             containerClassName="w-44"
           />
+          <Button variant="outline" icon={<Download size={16} />} onClick={handleExport}>
+            Export
+          </Button>
           {canEdit && (
             <Button
               icon={<Plus size={16} />}
