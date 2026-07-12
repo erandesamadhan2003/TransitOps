@@ -26,7 +26,7 @@ export function DocumentsModal({
     if (!file || !docType) return;
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("document", file);
     formData.append("docType", docType);
     if (expiryDate) {
       formData.append("expiryDate", expiryDate);
