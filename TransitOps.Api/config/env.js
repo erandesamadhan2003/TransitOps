@@ -5,7 +5,9 @@ const {
     JWT_EXPIRES_IN,
     DATABASE_URL,
     PORT,
-    NODE_ENV
+    NODE_ENV,
+    UPLOAD_DIR,
+    MAX_FILE_SIZE
 } = process.env;
 
 if (!JWT_SECRET) {
@@ -17,5 +19,7 @@ export const env = {
     JWT_EXPIRES_IN: JWT_EXPIRES_IN || '8h',
     DATABASE_URL,
     PORT: PORT || 5000,
-    NODE_ENV: NODE_ENV || 'development'
+    NODE_ENV: NODE_ENV || 'development',
+    UPLOAD_DIR: UPLOAD_DIR || 'uploads',
+    MAX_FILE_SIZE: parseInt(MAX_FILE_SIZE, 10) || 5242880
 };
