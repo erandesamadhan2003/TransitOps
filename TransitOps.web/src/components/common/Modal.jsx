@@ -13,6 +13,8 @@ export function Modal({
   open,
   onClose,
   title,
+  description,
+  footer,
   size = "md",
   className,
   children,
@@ -73,7 +75,7 @@ export function Modal({
         }}
       >
         {title && (
-          <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center justify-between mb-1">
             <h2 className="font-display text-[18px] font-bold text-text-primary tracking-tight">
               {title}
             </h2>
@@ -86,7 +88,14 @@ export function Modal({
             </button>
           </div>
         )}
+        {description && <p className="mb-5 text-[13px] text-text-secondary">{description}</p>}
+        {(!description && title) && <div className="mb-5" />}
         {children}
+        {footer && (
+          <div className="mt-6 flex items-center justify-end gap-3 pt-5 border-t border-border/60">
+            {footer}
+          </div>
+        )}
       </div>
     </div>,
     document.body,

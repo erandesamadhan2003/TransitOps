@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Settings, Shield } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui";
@@ -9,8 +9,7 @@ import { permissionService } from "@/services/permission.service";
 import { ROLES, ROLE_LABELS } from "@/constants/app";
 import { authService } from "@/services/auth.service";
 
-
-// Single source of truth lives in permission.service.js
+import { cn } from "@/utils/cn";
 const RBAC_MATRIX = permissionService.matrix();
 
 const MODULES = ["fleet", "drivers", "trips", "fuelExpenses", "analytics"];
@@ -22,7 +21,22 @@ const MODULE_LABELS = {
   analytics: "Analytics",
 };
 
+import { useToast } from "@/hooks";
+
 function RBACTable() {
+  const [matrix, setMatrix] = useState(permissionService.matrix());
+  const toast = useToast();
+
+  const handleUpdate = (role, module, level) => {
+    // Update local state
+    setMatrix(prev => ({
+      ...prev,
+      [role]: { ...prev[role], [module]: level }
+    }));
+    // Update service memory
+    permissionService.updateMatrix(role, module, level);
+    toast.success(`${ROLE_LABELS[role]} access to ${MODULE_LABELS[module]} updated to ${level}`);
+  };
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
@@ -37,7 +51,7 @@ function RBACTable() {
           </tr>
         </thead>
         <tbody>
-          {Object.entries(RBAC_MATRIX).map(([role, perms]) => (
+          {Object.entries(matrix).map(([role, perms]) => (
             <tr key={role} className="border-b border-border/60 last:border-0">
               <td className="py-2.5 pr-4 font-medium text-text-primary">
                 {ROLE_LABELS[role]}
@@ -46,11 +60,18 @@ function RBACTable() {
                 const level = perms[m];
                 return (
                   <td key={m} className="py-2.5 px-3 text-center">
-                    <span
-                      className={`text-xs font-medium ${level === "edit" ? "text-green-600" : level === "view" ? "text-amber-600" : "text-text-tertiary"}`}
+                    <select
+                      value={level}
+                      onChange={(e) => handleUpdate(role, m, e.target.value)}
+                      className={cn(
+                        "text-xs font-medium bg-transparent border-0 cursor-pointer outline-none focus:ring-2 focus:ring-ink-500 rounded p-1",
+                        level === "edit" ? "text-green-600" : level === "view" ? "text-amber-600" : "text-text-tertiary"
+                      )}
                     >
-                      {level === "none" ? "—" : level}
-                    </span>
+                      <option value="none">none</option>
+                      <option value="view">view</option>
+                      <option value="edit">edit</option>
+                    </select>
                   </td>
                 );
               })}

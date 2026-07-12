@@ -56,4 +56,10 @@ export const permissionService = {
   matrix() {
     return PERMISSION_MATRIX;
   },
+
+  updateMatrix(role, module, level) {
+    if (PERMISSION_MATRIX[role]) {
+      PERMISSION_MATRIX[role][module] = level;
+    }
+  },
 };
