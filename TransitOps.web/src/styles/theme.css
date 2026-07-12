@@ -1,0 +1,102 @@
+/*
+ * TransitOps Design System — CSS Custom Properties
+ * Single source of truth, generated from theme.md
+ * DO NOT add ad-hoc values here. All tokens live in this file.
+ */
+
+@theme {
+  /* ── Canvas & Background ─────────────────────────── */
+  --color-canvas: #f0f4f8;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+
+  /* ── Primary "Ink" Blue ──────────────────────────── */
+  --color-ink-50:  #EEF4FA;
+  --color-ink-100: #d0dcea;
+  --color-ink-200: #a8c0d6;
+  --color-ink-300: #7e9db8;
+  --color-ink-400: #4c7499;
+  --color-ink-500: #2563a8;
+  --color-ink-600: #1a3c5e;
+  --color-ink-700: #14304D;
+  --color-ink-800: #0F2438;
+  --color-ink-900: #0A1826;
+
+  /* ── Secondary Teal ──────────────────────────────── */
+  --color-teal-50:  #E7F5F1;
+  --color-teal-100: #C6E7DE;
+  --color-teal-400: #3F9A82;
+  --color-teal-500: #2E7D6B;
+  --color-teal-600: #236154;
+
+  /* ── Text ────────────────────────────────────────── */
+  --color-text-primary:   #0d1f35;
+  --color-text-secondary: #5A6A7A;
+  --color-text-tertiary:  #8AACC0;
+  --color-text-inverse:   #f0f4f8;
+
+  /* ── Borders ─────────────────────────────────────── */
+  --color-border:        #c5d8ec;
+  --color-border-strong: #A8C4DC;
+
+  /* ── Semantic: Status ────────────────────────────── */
+  --status-open-fg:         #2563a8;
+  --status-open-bg:         #dceaf7;
+  --status-open-border:     #a8c0d6;
+  --status-progress-fg:     #92620A;
+  --status-progress-bg:     #FDF3DC;
+  --status-progress-border: #F1D896;
+  --status-resolved-fg:     #1F7A5C;
+  --status-resolved-bg:     #E1F5EC;
+  --status-resolved-border: #A9DFC7;
+  --status-closed-fg:       #5A6A7A;
+  --status-closed-bg:       #EEF1F4;
+  --status-closed-border:   #D2D9E0;
+  --status-reopened-fg:     #7C3AAD;
+  --status-reopened-bg:     #F1E9FA;
+  --status-reopened-border: #D9BFEF;
+
+  /* ── Semantic: Priority ──────────────────────────── */
+  --priority-low-fg:         #4B5A6A;
+  --priority-low-bg:         #EEF1F4;
+  --priority-low-border:     #D2D9E0;
+  --priority-medium-fg:      #2563a8;
+  --priority-medium-bg:      #dceaf7;
+  --priority-medium-border:  #a8c0d6;
+  --priority-high-fg:        #B5540A;
+  --priority-high-bg:        #FCE9D9;
+  --priority-high-border:    #F0BE8E;
+  --priority-critical-fg:    #B3241F;
+  --priority-critical-bg:    #FBE2E1;
+  --priority-critical-border:#F0AFAC;
+
+  /* ── Typography ──────────────────────────────────── */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-body:    'Inter', system-ui, sans-serif;
+  --font-mono:    'IBM Plex Mono', monospace;
+
+  /* ── Shadows ─────────────────────────────────────── */
+  --shadow-card:   0 1px 3px rgba(26,60,94,0.07), 0 1px 2px rgba(26,60,94,0.04);
+  --shadow-raised: 0 8px 48px rgba(26,60,94,0.10), 0 1px 0 rgba(255,255,255,0.9) inset;
+  --shadow-glass:  0 4px 24px rgba(26,60,94,0.08), 0 1px 0 rgba(255,255,255,0.8) inset;
+  --shadow-focus:  0 0 0 3px rgba(37,99,168,0.18);
+
+  /* ── Border Radius ───────────────────────────────── */
+  --radius-card:   16px;
+  --radius-modal:  20px;
+
+  /* ── Keyframe Animations ─────────────────────────── */
+  --animate-toast-in: toast-in 0.18s ease-out;
+  --animate-fade-up:  fade-up 0.65s cubic-bezier(0.22,1,0.36,1) both;
+}
+
+/* ── Keyframes ───────────────────────────────────────── */
+@keyframes toast-in {
+  0%   { transform: translateY(-8px); opacity: 0; }
+  100% { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes fade-up {
+  0%   { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
