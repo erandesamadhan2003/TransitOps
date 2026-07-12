@@ -15,7 +15,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col h-full glass-sidebar transition-all duration-300 shrink-0 overflow-hidden",
+        "hidden md:flex flex-col fixed inset-y-0 left-0 z-40 glass-sidebar transition-all duration-300 shrink-0 overflow-hidden",
         "ease-[cubic-bezier(0.4,0,0.2,1)]",
         expanded ? "w-[260px]" : "w-[80px]",
       )}
